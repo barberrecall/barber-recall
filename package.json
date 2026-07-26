@@ -9,6 +9,8 @@
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
   "private": true,
+  "//packageManager": "Fixa a versão do pnpm para o build remoto usar a mesma daqui. Sem isto o Railway escolhe a dele: `overrides` no pnpm-workspace.yaml só existe no pnpm 10+, então um pnpm 9 não lê essa seção, compara 'config sem overrides' com 'lockfile com overrides' e aborta com ERR_PNPM_LOCKFILE_CONFIG_MISMATCH.",
+  "packageManager": "pnpm@11.17.0",
   "devDependencies": {
     "@esbuild/win32-x64": "0.27.3",
     "prettier": "^3.8.4",
