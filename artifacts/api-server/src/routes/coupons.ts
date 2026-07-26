@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { nullIfBlank } from "../lib/coerce";
 import { eq, and } from "drizzle-orm";
 import { db, couponsTable } from "@workspace/db";
 
@@ -61,10 +62,9 @@ router.patch("/coupons/:id", async (req, res): Promise<void> => {
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   const { codigo, tipo, valor, validade, ativo, usoMaximo } = req.body;
 
-  // Limpar "validade" ou "uso máximo" chega como string vazia. `validade` é
-  // coluna `date` e `uso_maximo` é integer — o Postgres rejeita '' nas duas e a
-  // query inteira falha com 500. Mesmo tratamento aplicado em /clients.
-  const orNull = (value: unknown) => (value === "" ? null : value);
+  // `validade` é coluna `date` e `uso_maximo` é integer: vazio precisa virar
+  // null, senão o Postgres rejeita '' e a query inteira falha com 500.
+  const orNull = nullIfBlank;
 
   const updates: Record<string, unknown> = {};
   if (codigo !== undefined) updates.codigo = codigo;

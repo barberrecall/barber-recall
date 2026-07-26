@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, and, sql } from "drizzle-orm";
 import { db, appointmentsTable, clientsTable, barbersTable, servicesTable } from "@workspace/db";
 import { syncClientRecallCache } from "../lib/recall";
+import { nullableInt, requiredNumber, requiredDate } from "../lib/coerce";
 
 const router: IRouter = Router();
 
@@ -50,15 +51,37 @@ router.get("/appointments", async (req, res): Promise<void> => {
 
 router.post("/appointments", async (req, res): Promise<void> => {
   const barbershopId = req.session.barbershopId!;
-  const { clienteId, barbeiroId, servicoId, valor, desconto, valorFinal, data, observacoes } = req.body;
-  if (!clienteId || !data) {
-    res.status(400).json({ error: "clienteId and data are required" });
+  const body = req.body;
+  const errors: string[] = [];
+
+  // Coerção antes de qualquer consulta: um `""` chegando numa coluna numérica ou
+  // de data derruba a query com 500 em vez de dizer o que está errado.
+  const clienteId = requiredNumber(body.clienteId, "clienteId", errors, { integer: true });
+  const barbeiroId = nullableInt(body.barbeiroId, "barbeiroId", errors);
+  const servicoId = nullableInt(body.servicoId, "servicoId", errors);
+  const valor = requiredNumber(body.valor ?? 0, "valor", errors, { min: 0 });
+  const desconto = requiredNumber(body.desconto ?? 0, "desconto", errors, { min: 0 });
+  const valorFinal = requiredNumber(
+    body.valorFinal ?? body.valor ?? 0,
+    "valorFinal",
+    errors,
+    { min: 0 },
+  );
+  const data = requiredDate(body.data, "data", errors);
+
+  if (clienteId === undefined) errors.push("clienteId é obrigatório.");
+  if (data === undefined && !errors.some((e) => e.startsWith("data"))) {
+    errors.push("data é obrigatória.");
+  }
+
+  if (errors.length > 0) {
+    res.status(400).json({ error: errors.join(" ") });
     return;
   }
 
   // Validate that referenced records belong to this barbershop
   const [clientOwned] = await db.select({ id: clientsTable.id }).from(clientsTable)
-    .where(and(eq(clientsTable.id, clienteId), eq(clientsTable.barbershopId, barbershopId)));
+    .where(and(eq(clientsTable.id, clienteId!), eq(clientsTable.barbershopId, barbershopId)));
   if (!clientOwned) { res.status(400).json({ error: "Cliente não pertence a esta barbearia." }); return; }
 
   if (barbeiroId) {
@@ -75,17 +98,17 @@ router.post("/appointments", async (req, res): Promise<void> => {
 
   const [a] = await db.insert(appointmentsTable).values({
     barbershopId,
-    clienteId,
+    clienteId: clienteId!,
     barbeiroId: barbeiroId ?? null,
     servicoId: servicoId ?? null,
-    valor: String(valor ?? 0),
-    desconto: String(desconto ?? 0),
-    valorFinal: String(valorFinal ?? valor ?? 0),
-    data: new Date(data),
-    observacoes: observacoes ?? null,
+    valor: String(valor),
+    desconto: String(desconto),
+    valorFinal: String(valorFinal),
+    data: data!,
+    observacoes: body.observacoes ?? null,
   }).returning();
 
-  await syncClientRecallCache(clienteId, barbershopId);
+  await syncClientRecallCache(clienteId!, barbershopId);
 
   res.status(201).json(await fmtAppt(a));
 });
@@ -103,15 +126,31 @@ router.patch("/appointments/:id", async (req, res): Promise<void> => {
   const barbershopId = req.session.barbershopId!;
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
-  const { barbeiroId, servicoId, valor, desconto, valorFinal, data, observacoes } = req.body;
+  const body = req.body;
+  const errors: string[] = [];
+
+  const barbeiroId = nullableInt(body.barbeiroId, "barbeiroId", errors);
+  const servicoId = nullableInt(body.servicoId, "servicoId", errors);
+  const valor = requiredNumber(body.valor, "valor", errors, { min: 0 });
+  const desconto = requiredNumber(body.desconto, "desconto", errors, { min: 0 });
+  const valorFinal = requiredNumber(body.valorFinal, "valorFinal", errors, { min: 0 });
+  const data = requiredDate(body.data, "data", errors);
+
+  if (errors.length > 0) {
+    res.status(400).json({ error: errors.join(" ") });
+    return;
+  }
+
   const updates: Record<string, unknown> = {};
+  // `!== undefined` distingue "não enviado" de "enviado vazio": o primeiro
+  // deixa o campo como está, o segundo já virou null ou erro acima.
   if (barbeiroId !== undefined) updates.barbeiroId = barbeiroId;
   if (servicoId !== undefined) updates.servicoId = servicoId;
   if (valor !== undefined) updates.valor = String(valor);
   if (desconto !== undefined) updates.desconto = String(desconto);
   if (valorFinal !== undefined) updates.valorFinal = String(valorFinal);
-  if (data !== undefined) updates.data = new Date(data);
-  if (observacoes !== undefined) updates.observacoes = observacoes;
+  if (data !== undefined) updates.data = data;
+  if (body.observacoes !== undefined) updates.observacoes = body.observacoes;
   const [a] = await db.update(appointmentsTable).set(updates).where(and(eq(appointmentsTable.id, id), eq(appointmentsTable.barbershopId, barbershopId))).returning();
   if (!a) { res.status(404).json({ error: "not found" }); return; }
 

@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { nullIfBlank } from "../lib/coerce";
 import { eq, and, ilike, sql } from "drizzle-orm";
 import { db, clientsTable, appointmentsTable, barbersTable, servicesTable } from "@workspace/db";
 import { getDiasRetorno, isRecallStatus, recallStatusSql, type RecallStatus } from "../lib/recall";
@@ -125,10 +126,9 @@ router.patch("/clients/:id", async (req, res): Promise<void> => {
   // `status` não é editável: vem do cálculo de recall (ver ../lib/recall).
   const { nome, telefone, email, dataNascimento, observacoes, ativo } = req.body;
 
-  // Limpar um campo opcional chega como string vazia, e `data_nascimento` é uma
-  // coluna `date`: o Postgres rejeita '' e a query inteira falha com 500. As
-  // colunas nulláveis recebem null, igual ao que o POST já fazia.
-  const orNull = (value: unknown) => (value === "" ? null : value);
+  // Colunas nuláveis: vazio significa limpar. Sem isso, `data_nascimento` (uma
+  // coluna `date`) recebe '' e o Postgres derruba a query inteira com 500.
+  const orNull = nullIfBlank;
 
   const updates: Record<string, unknown> = {};
   if (nome !== undefined) updates.nome = nome;

@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requiredNumber, nullableInt } from "../lib/coerce";
 import { eq, and, sql } from "drizzle-orm";
 import { db, campaignsTable, couponsTable, notificationsTable, DIAS_CAMPANHA_PADRAO } from "@workspace/db";
 
@@ -38,7 +39,18 @@ router.get("/campaigns", async (req, res): Promise<void> => {
 
 router.post("/campaigns", async (req, res): Promise<void> => {
   const barbershopId = req.session.barbershopId!;
-  const { nome, tipo, dias, mensagem, cupomId } = req.body;
+  const { nome, tipo, mensagem } = req.body;
+  const postErrors: string[] = [];
+  // `dias` é integer NOT NULL; `cupomId` é integer nulável.
+  const dias = requiredNumber(req.body.dias ?? DIAS_CAMPANHA_PADRAO, "dias", postErrors, {
+    integer: true,
+    min: 0,
+  });
+  const cupomId = nullableInt(req.body.cupomId, "cupomId", postErrors);
+  if (postErrors.length > 0) {
+    res.status(400).json({ error: postErrors.join(" ") });
+    return;
+  }
   if (!nome || !mensagem) { res.status(400).json({ error: "nome and mensagem are required" }); return; }
   try {
   if (cupomId) {
@@ -46,7 +58,7 @@ router.post("/campaigns", async (req, res): Promise<void> => {
       .where(and(eq(couponsTable.id, cupomId), eq(couponsTable.barbershopId, barbershopId)));
     if (!couponOwned) { res.status(400).json({ error: "Cupom não pertence a esta barbearia." }); return; }
   }
-    const [c] = await db.insert(campaignsTable).values({ barbershopId, nome, tipo: tipo ?? "return", dias: dias ?? DIAS_CAMPANHA_PADRAO, mensagem, cupomId: cupomId ?? null }).returning();
+    const [c] = await db.insert(campaignsTable).values({ barbershopId, nome, tipo: tipo ?? "return", dias: dias!, mensagem, cupomId: cupomId ?? null }).returning();
     res.status(201).json(await fmtCampaign(c));
   } catch {
     res.status(500).json({ error: "Erro ao criar campanha." });
@@ -57,18 +69,20 @@ router.patch("/campaigns/:id", async (req, res): Promise<void> => {
   const barbershopId = req.session.barbershopId!;
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
-  const { nome, tipo, dias, mensagem, cupomId, ativo } = req.body;
+  const { nome, tipo, mensagem, ativo } = req.body;
+  const errors: string[] = [];
+  const dias = requiredNumber(req.body.dias, "dias", errors, { integer: true, min: 0 });
+  const cupomId = nullableInt(req.body.cupomId, "cupomId", errors);
 
-  // Desanexar o cupom chega como string vazia; `cupom_id` é integer e o
-  // Postgres rejeita ''. Mesmo tratamento aplicado em /clients e /coupons.
-  const orNull = (value: unknown) => (value === "" ? null : value);
+  if (errors.length > 0) { res.status(400).json({ error: errors.join(" ") }); return; }
 
   const updates: Record<string, unknown> = {};
   if (nome !== undefined) updates.nome = nome;
   if (tipo !== undefined) updates.tipo = tipo;
   if (dias !== undefined) updates.dias = dias;
   if (mensagem !== undefined) updates.mensagem = mensagem;
-  if (cupomId !== undefined) updates.cupomId = orNull(cupomId);
+  // `nullableInt` já devolveu null para vazio.
+  if (cupomId !== undefined) updates.cupomId = cupomId;
   if (ativo !== undefined) updates.ativo = ativo;
   const [c] = await db.update(campaignsTable).set(updates).where(and(eq(campaignsTable.id, id), eq(campaignsTable.barbershopId, barbershopId))).returning();
   if (!c) { res.status(404).json({ error: "not found" }); return; }

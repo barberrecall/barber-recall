@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requiredNumber } from "../lib/coerce";
 import { eq } from "drizzle-orm";
 import { db, barbershopTable } from "@workspace/db";
 
@@ -95,7 +96,18 @@ router.patch("/barbershop", async (req, res): Promise<void> => {
   if (whatsapp !== undefined) updates.whatsapp = whatsapp;
   if (instagram !== undefined) updates.instagram = instagram;
   if (mensagemPadrao !== undefined) updates.mensagemPadrao = mensagemPadrao;
-  if (diasRetorno !== undefined) updates.diasRetorno = diasRetorno;
+  // `dias_retorno` é integer NOT NULL e governa todo o cálculo de recall: um
+  // valor inválido aqui reclassificaria os clientes de forma silenciosa.
+  const diasErrors: string[] = [];
+  const diasRetornoNum = requiredNumber(diasRetorno, "diasRetorno", diasErrors, {
+    integer: true,
+    min: 1,
+  });
+  if (diasErrors.length > 0) {
+    res.status(400).json({ error: diasErrors.join(" ") });
+    return;
+  }
+  if (diasRetornoNum !== undefined) updates.diasRetorno = diasRetornoNum;
 
   const [updated] = await db
     .update(barbershopTable)
