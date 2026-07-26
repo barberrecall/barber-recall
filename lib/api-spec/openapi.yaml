@@ -749,6 +749,44 @@ paths:
                 items:
                   $ref: "#/components/schemas/Notification"
 
+  /notifications/generate:
+    post:
+      operationId: generateNotifications
+      tags: [notifications]
+      summary: Build today's pending sends from the active campaigns
+      description: >
+        Recomputes the pending notifications for every active campaign. Client
+        eligibility comes from the recall rule in api-server/src/lib/recall.ts,
+        never from a local calculation — see the campanhas-whatsapp skill.
+      responses:
+        "200":
+          description: Number of notifications created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateNotificationsResult"
+
+  /notifications/{id}/sent:
+    patch:
+      operationId: markNotificationSent
+      tags: [notifications]
+      summary: Record that the barber opened WhatsApp for this notification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Notification marked as sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResult"
+        "404":
+          description: Notification not found
+
 components:
   schemas:
     HealthStatus:
@@ -1324,10 +1362,29 @@ components:
           type: integer
         clienteNome:
           type: ["string", "null"]
+        clienteTelefone:
+          type: ["string", "null"]
+        clienteUltimoAtendimento:
+          type: ["string", "null"]
+          format: date-time
+        diasSemVisita:
+          type: ["integer", "null"]
+          description: Days since the client's last appointment.
         campaignId:
           type: integer
         campaignNome:
           type: ["string", "null"]
+        mensagemResolvida:
+          type: ["string", "null"]
+          description: >
+            Campaign template with {nome}, {barbearia}, {dias} and
+            {cupom_texto} already substituted server-side.
+        waLink:
+          type: ["string", "null"]
+          description: >
+            Ready-to-open wa.me link carrying the resolved message. The client
+            opens it so the barber can review and press send — the system never
+            sends on its own (see the campanhas-whatsapp skill).
         status:
           type: string
           enum: [pending, sent, failed]
@@ -1340,4 +1397,19 @@ components:
         opened:
           type: boolean
         clicked:
+          type: boolean
+
+    GenerateNotificationsResult:
+      type: object
+      required: [generated]
+      properties:
+        generated:
+          type: integer
+          description: How many pending notifications were created.
+
+    OkResult:
+      type: object
+      required: [ok]
+      properties:
+        ok:
           type: boolean

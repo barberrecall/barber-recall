@@ -400,15 +400,43 @@ export interface Notification {
   clientId: number;
   /** @nullable */
   clienteNome?: string | null;
+  /** @nullable */
+  clienteTelefone?: string | null;
+  /** @nullable */
+  clienteUltimoAtendimento?: string | null;
+  /**
+     * Days since the client's last appointment.
+     * @nullable
+     */
+  diasSemVisita?: number | null;
   campaignId: number;
   /** @nullable */
   campaignNome?: string | null;
+  /**
+     * Campaign template with {nome}, {barbearia}, {dias} and {cupom_texto} already substituted server-side.
+     * @nullable
+     */
+  mensagemResolvida?: string | null;
+  /**
+     * Ready-to-open wa.me link carrying the resolved message. The client opens it so the barber can review and press send — the system never sends on its own (see the campanhas-whatsapp skill).
+     * @nullable
+     */
+  waLink?: string | null;
   status: NotificationStatus;
   scheduledAt: string;
   /** @nullable */
   sentAt?: string | null;
   opened?: boolean;
   clicked?: boolean;
+}
+
+export interface GenerateNotificationsResult {
+  /** How many pending notifications were created. */
+  generated: number;
+}
+
+export interface OkResult {
+  ok: boolean;
 }
 
 export type ListClientsParams = {

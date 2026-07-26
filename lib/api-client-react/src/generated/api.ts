@@ -41,6 +41,7 @@ import type {
   CouponUpdate,
   DashboardCharts,
   DashboardStats,
+  GenerateNotificationsResult,
   GetClientReportParams,
   GetReportsOverviewParams,
   GetRevenueReportParams,
@@ -50,6 +51,7 @@ import type {
   ListClientsParams,
   ListNotificationsParams,
   Notification,
+  OkResult,
   ReportOverview,
   RevenueDataPoint,
   Service,
@@ -2994,4 +2996,145 @@ export function useListNotifications<TData = Awaited<ReturnType<typeof listNotif
 
 
 
+
+export const getGenerateNotificationsUrl = () => {
+
+
+
+
+  return `/api/notifications/generate`
+}
+
+/**
+ * Recomputes the pending notifications for every active campaign. Client eligibility comes from the recall rule in api-server/src/lib/recall.ts, never from a local calculation — see the campanhas-whatsapp skill.
+ * @summary Build today's pending sends from the active campaigns
+ */
+export const generateNotifications = async ( options?: RequestInit): Promise<GenerateNotificationsResult> => {
+
+  return customFetch<GenerateNotificationsResult>(getGenerateNotificationsUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getGenerateNotificationsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateNotifications>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateNotifications>>, TError,void, TContext> => {
+
+const mutationKey = ['generateNotifications'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateNotifications>>, void> = () => {
+
+
+          return  generateNotifications(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateNotificationsMutationResult = NonNullable<Awaited<ReturnType<typeof generateNotifications>>>
+
+    export type GenerateNotificationsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Build today's pending sends from the active campaigns
+ */
+export const useGenerateNotifications = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateNotifications>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateNotifications>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getGenerateNotificationsMutationOptions(options));
+    }
+
+export const getMarkNotificationSentUrl = (id: number,) => {
+
+
+
+
+  return `/api/notifications/${id}/sent`
+}
+
+/**
+ * @summary Record that the barber opened WhatsApp for this notification
+ */
+export const markNotificationSent = async (id: number, options?: RequestInit): Promise<OkResult> => {
+
+  return customFetch<OkResult>(getMarkNotificationSentUrl(id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+
+export const getMarkNotificationSentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markNotificationSent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markNotificationSent>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['markNotificationSent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markNotificationSent>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  markNotificationSent(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkNotificationSentMutationResult = NonNullable<Awaited<ReturnType<typeof markNotificationSent>>>
+
+    export type MarkNotificationSentMutationError = ErrorType<void>
+
+    /**
+ * @summary Record that the barber opened WhatsApp for this notification
+ */
+export const useMarkNotificationSent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markNotificationSent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markNotificationSent>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getMarkNotificationSentMutationOptions(options));
+    }
 

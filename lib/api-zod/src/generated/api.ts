@@ -781,8 +781,13 @@ export const ListNotificationsResponseItem = zod.object({
   "id": zod.number(),
   "clientId": zod.number(),
   "clienteNome": zod.string().nullish(),
+  "clienteTelefone": zod.string().nullish(),
+  "clienteUltimoAtendimento": zod.coerce.date().nullish(),
+  "diasSemVisita": zod.number().nullish().describe('Days since the client\'s last appointment.'),
   "campaignId": zod.number(),
   "campaignNome": zod.string().nullish(),
+  "mensagemResolvida": zod.string().nullish().describe('Campaign template with {nome}, {barbearia}, {dias} and {cupom_texto} already substituted server-side.\n'),
+  "waLink": zod.string().nullish().describe('Ready-to-open wa.me link carrying the resolved message. The client opens it so the barber can review and press send — the system never sends on its own (see the campanhas-whatsapp skill).\n'),
   "status": zod.enum(['pending', 'sent', 'failed']),
   "scheduledAt": zod.coerce.date(),
   "sentAt": zod.coerce.date().nullish(),
@@ -790,5 +795,26 @@ export const ListNotificationsResponseItem = zod.object({
   "clicked": zod.boolean().optional()
 })
 export const ListNotificationsResponse = zod.array(ListNotificationsResponseItem)
+
+
+/**
+ * Recomputes the pending notifications for every active campaign. Client eligibility comes from the recall rule in api-server/src/lib/recall.ts, never from a local calculation — see the campanhas-whatsapp skill.
+ * @summary Build today's pending sends from the active campaigns
+ */
+export const GenerateNotificationsResponse = zod.object({
+  "generated": zod.number().describe('How many pending notifications were created.')
+})
+
+
+/**
+ * @summary Record that the barber opened WhatsApp for this notification
+ */
+export const MarkNotificationSentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkNotificationSentResponse = zod.object({
+  "ok": zod.boolean()
+})
 
 
