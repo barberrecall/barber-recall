@@ -52,3 +52,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Ajustes locais do Claude Code: caminhos absolutos e ids de sessão da máquina.
+# As skills em .claude/skills/ são compartilhadas e ficam versionadas.
+.claude/settings.local.json

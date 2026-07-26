@@ -4,10 +4,10 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "dev": "expo start",
-    "dev:lan": "expo start --lan",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "dev": "expo start --lan",
+    "dev:tunnel": "expo start --tunnel",
+    "android": "expo start --lan --android",
+    "ios": "expo start --lan --ios",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
