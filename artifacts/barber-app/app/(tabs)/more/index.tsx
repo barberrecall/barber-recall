@@ -8,6 +8,8 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  Users,
+  Scissors,
   type LucideIcon,
 } from "lucide-react-native";
 import { useAuth } from "@/contexts/auth-context";
@@ -15,6 +17,20 @@ import { Card } from "@/components/ui";
 
 /** Mesmas seções que o CRM web esconde atrás do "Mais" na barra inferior. */
 const ITEMS: { href: Href; label: string; description: string; icon: LucideIcon; tint: string }[] = [
+  {
+    href: "/more/barbers",
+    label: "Barbeiros",
+    description: "Equipe da barbearia",
+    icon: Users,
+    tint: "#3B82F6",
+  },
+  {
+    href: "/more/services",
+    label: "Serviços",
+    description: "Preços e duração",
+    icon: Scissors,
+    tint: "#10B981",
+  },
   {
     href: "/more/coupons",
     label: "Cupons",
