@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { Search, Users, Phone, ChevronRight } from "lucide-react-native";
+import { Search, Users, Phone, ChevronRight, UserPlus } from "lucide-react-native";
 import {
   useListClients,
   type Client,
@@ -81,7 +81,19 @@ export default function ClientsScreen() {
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       <View className="gap-3 border-b border-border px-4 pb-3 pt-2">
-        <Text className="text-lg font-bold text-foreground">Clientes</Text>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-lg font-bold text-foreground">Clientes</Text>
+
+          <Pressable
+            onPress={() => router.push("/clients/new")}
+            accessibilityRole="button"
+            accessibilityLabel="Cadastrar cliente"
+            className="h-9 flex-row items-center gap-1.5 rounded-lg bg-primary px-3 active:opacity-80"
+          >
+            <UserPlus size={14} color="#0A0E1A" />
+            <Text className="text-xs font-semibold text-primary-foreground">Novo</Text>
+          </Pressable>
+        </View>
 
         <View className="flex-row items-center gap-2 rounded-lg border border-input bg-card px-3">
           <Search size={16} color="#8A94A6" />

@@ -124,12 +124,18 @@ router.patch("/clients/:id", async (req, res): Promise<void> => {
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   // `status` não é editável: vem do cálculo de recall (ver ../lib/recall).
   const { nome, telefone, email, dataNascimento, observacoes, ativo } = req.body;
+
+  // Limpar um campo opcional chega como string vazia, e `data_nascimento` é uma
+  // coluna `date`: o Postgres rejeita '' e a query inteira falha com 500. As
+  // colunas nulláveis recebem null, igual ao que o POST já fazia.
+  const orNull = (value: unknown) => (value === "" ? null : value);
+
   const updates: Record<string, unknown> = {};
   if (nome !== undefined) updates.nome = nome;
   if (telefone !== undefined) updates.telefone = telefone;
-  if (email !== undefined) updates.email = email;
-  if (dataNascimento !== undefined) updates.dataNascimento = dataNascimento;
-  if (observacoes !== undefined) updates.observacoes = observacoes;
+  if (email !== undefined) updates.email = orNull(email);
+  if (dataNascimento !== undefined) updates.dataNascimento = orNull(dataNascimento);
+  if (observacoes !== undefined) updates.observacoes = orNull(observacoes);
   if (ativo !== undefined) updates.ativo = ativo;
   const [c] = await db.update(clientsTable).set(updates).where(and(eq(clientsTable.id, id), eq(clientsTable.barbershopId, barbershopId))).returning();
   if (!c) { res.status(404).json({ error: "not found" }); return; }

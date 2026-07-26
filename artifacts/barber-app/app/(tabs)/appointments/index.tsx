@@ -17,7 +17,7 @@ import {
   ChevronRight,
   CalendarDays,
   Banknote,
-  User,
+  Plus,
 } from "lucide-react-native";
 import {
   useListAppointments,
@@ -99,7 +99,19 @@ export default function AppointmentsScreen() {
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       <View className="gap-3 border-b border-border px-4 pb-3 pt-2">
-        <Text className="text-lg font-bold text-foreground">Atendimentos</Text>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-lg font-bold text-foreground">Atendimentos</Text>
+
+          <Pressable
+            onPress={() => router.push("/appointments/new")}
+            accessibilityRole="button"
+            accessibilityLabel="Registrar atendimento"
+            className="h-9 flex-row items-center gap-1.5 rounded-lg bg-primary px-3 active:opacity-80"
+          >
+            <Plus size={14} color="#0A0E1A" />
+            <Text className="text-xs font-semibold text-primary-foreground">Novo</Text>
+          </Pressable>
+        </View>
 
         <View className="flex-row items-center justify-between rounded-lg border border-border bg-card px-2 py-1.5">
           <Pressable

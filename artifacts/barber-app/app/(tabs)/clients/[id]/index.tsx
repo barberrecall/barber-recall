@@ -18,6 +18,8 @@ import {
   CalendarDays,
   MessageCircle,
   Scissors,
+  Pencil,
+  Plus,
 } from "lucide-react-native";
 import {
   useGetClient,
@@ -119,7 +121,16 @@ export default function ClientDetailScreen() {
         >
           <ChevronLeft size={22} color="#8A94A6" />
         </Pressable>
-        <Text className="text-lg font-bold text-foreground">Cliente</Text>
+        <Text className="flex-1 text-lg font-bold text-foreground">Cliente</Text>
+
+        <Pressable
+          onPress={() => router.push(`/clients/${clientId}/edit`)}
+          accessibilityRole="button"
+          accessibilityLabel="Editar cliente"
+          className="h-10 w-10 items-center justify-center rounded-lg active:opacity-70"
+        >
+          <Pencil size={18} color="#8A94A6" />
+        </Pressable>
       </View>
 
       {isLoading ? (
@@ -216,9 +227,23 @@ export default function ClientDetailScreen() {
             </Card>
           ) : null}
 
-          <Text className="mt-2 text-base font-semibold text-foreground">
-            Histórico de atendimentos
-          </Text>
+          <View className="mt-2 flex-row items-center justify-between">
+            <Text className="text-base font-semibold text-foreground">
+              Histórico de atendimentos
+            </Text>
+
+            <Pressable
+              onPress={() =>
+                router.push(`/appointments/new?clienteId=${clientId}`)
+              }
+              accessibilityRole="button"
+              accessibilityLabel="Registrar atendimento para este cliente"
+              className="h-9 flex-row items-center gap-1.5 rounded-lg border border-border px-3 active:opacity-70"
+            >
+              <Plus size={14} color="#F59E0B" />
+              <Text className="text-xs font-semibold text-primary">Novo</Text>
+            </Pressable>
+          </View>
 
           {loadingAppointments ? (
             <ActivityIndicator color="#F59E0B" />
