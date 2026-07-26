@@ -167,4 +167,8 @@ overrides:
   lightningcss: "1.32.0"
 
 allowBuilds:
+  # Módulo nativo opcional que o bunyan puxa dentro do eas-cli, para tracing em
+  # Solaris/illumos. Não é usado aqui e compilá-lo exigiria toolchain nativa no
+  # Windows sem benefício nenhum — o bunyan funciona sem ele.
+  dtrace-provider: false
   esbuild: true
