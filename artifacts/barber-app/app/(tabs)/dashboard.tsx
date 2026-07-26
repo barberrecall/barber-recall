@@ -10,9 +10,13 @@ import {
   Ticket,
   Activity,
 } from "lucide-react-native";
-import { useGetDashboardStats } from "@workspace/api-client-react";
+import {
+  useGetDashboardStats,
+  useGetDashboardCharts,
+} from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/auth-context";
 import { StatCard, Card } from "@/components/ui";
+import { BarChartCard, AreaChartCard } from "@/components/charts";
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -23,6 +27,15 @@ export default function DashboardScreen() {
   // prepends the base URL and attaches the Bearer token.
   const { data: stats, isLoading, isError, error, refetch, isRefetching } =
     useGetDashboardStats();
+
+  const { data: charts, refetch: refetchCharts } = useGetDashboardCharts();
+
+  // Puxar para atualizar precisa recarregar KPIs e gráficos juntos, senão os
+  // números e as curvas passam a contar histórias de momentos diferentes.
+  const handleRefresh = () => {
+    void refetch();
+    void refetchCharts();
+  };
 
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
@@ -44,7 +57,7 @@ export default function DashboardScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={refetch}
+            onRefresh={handleRefresh}
             tintColor="#F59E0B"
           />
         }
@@ -126,6 +139,35 @@ export default function DashboardScreen() {
                 tint="#6366F1"
               />
             </View>
+          </>
+        ) : null}
+
+        {charts ? (
+          <>
+            <AreaChartCard
+              title="Receita"
+              subtitle="Últimos 6 meses"
+              points={charts.receita}
+              formatValue={(value) => `R$ ${value.toFixed(0)}`}
+            />
+
+            <BarChartCard
+              title="Clientes por dia"
+              subtitle="Esta semana"
+              points={charts.clientesPorDia}
+              formatValue={(value) =>
+                `${value} ${value === 1 ? "cliente" : "clientes"}`
+              }
+            />
+
+            <AreaChartCard
+              title="Retornos por mês"
+              subtitle="Clientes que voltaram"
+              points={charts.retornoMensal}
+              formatValue={(value) =>
+                `${value} ${value === 1 ? "retorno" : "retornos"}`
+              }
+            />
           </>
         ) : null}
       </ScrollView>
