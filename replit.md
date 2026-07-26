@@ -15,6 +15,44 @@ Copy `.env.example` to `.env` first — the API server and drizzle-kit both read
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/scripts run seed:demo` — populate a demo barbershop (refuses to run over existing clients)
 
+## Deploy
+
+### API (Railway)
+
+`railway.json` já carrega o build e o start. No painel do Railway, aponte para
+este repositório e defina as variáveis:
+
+| Variável | Observação |
+|---|---|
+| `DATABASE_URL` | a mesma string do Neon |
+| `SESSION_SECRET` | obrigatória: o servidor se recusa a subir sem ela em produção |
+| `NODE_ENV` | `production` |
+| `ALLOWED_ORIGINS` | domínios do CRM web, separados por vírgula |
+
+`PORT` é injetada pelo Railway — não defina. O healthcheck usa `/api/healthz`.
+
+`ALLOWED_ORIGINS` só afeta navegadores. Sem ela o app móvel funciona (requisição
+nativa não envia `Origin`), mas o CRM web é bloqueado; o servidor avisa no log.
+
+### App (EAS)
+
+`eas.json` tem três perfis. O `preview` gera **APK** para instalação direta, sem
+loja e sem conta paga:
+
+```
+pnpm --filter @workspace/barber-app exec eas build -p android --profile preview
+```
+
+Antes: troque `EXPO_PUBLIC_API_URL` em `eas.json` pela URL do Railway. O valor
+placeholder é um domínio inexistente de propósito — se ficar, o app falha na
+primeira chamada em vez de parecer funcionar apontando para lugar errado.
+
+Sem `EXPO_PUBLIC_API_URL` o app deriva o endereço do host do Metro, o que só
+funciona em desenvolvimento na mesma rede.
+
+Os ícones são gerados, não versionados à mão:
+`pnpm --filter @workspace/scripts run icons`
+
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9

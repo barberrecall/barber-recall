@@ -33,7 +33,41 @@ app.use(
   }),
 );
 
-app.use(cors({ origin: true, credentials: true }));
+/**
+ * CORS.
+ *
+ * `origin: true` reflete qualquer origem, e combinado com `credentials: true`
+ * isso permitiria a qualquer site fazer requisições autenticadas contra a API.
+ * Aceitável numa LAN, inaceitável numa URL pública.
+ *
+ * Em produção, portanto, a lista vem de `ALLOWED_ORIGINS` (separada por vírgula)
+ * e nada fora dela passa. Em desenvolvimento segue permissivo, porque o Vite
+ * troca de porta e o Expo serve de um IP de LAN variável.
+ *
+ * O app móvel não é afetado: CORS é imposto por navegadores, e requisições
+ * nativas não enviam `Origin`. Isto protege o CRM web, que autentica por cookie.
+ */
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (process.env.NODE_ENV === "production" && allowedOrigins.length === 0) {
+  logger.warn(
+    "ALLOWED_ORIGINS não definida em produção: nenhuma origem de navegador será aceita. " +
+      "O app móvel continua funcionando; defina a variável para liberar o CRM web.",
+  );
+}
+
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? allowedOrigins
+        : true,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
