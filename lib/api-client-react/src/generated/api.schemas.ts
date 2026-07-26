@@ -426,6 +426,16 @@ export interface Notification {
   scheduledAt: string;
   /** @nullable */
   sentAt?: string | null;
+  /**
+     * users.id of whoever opened WhatsApp for this send. Null while the notification is still pending, and on rows created before the column existed.
+     * @nullable
+     */
+  sentBy?: number | null;
+  /**
+     * Name of the user in sentBy, resolved for display.
+     * @nullable
+     */
+  sentByNome?: string | null;
   opened?: boolean;
   clicked?: boolean;
 }

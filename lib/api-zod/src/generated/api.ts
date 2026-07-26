@@ -791,6 +791,8 @@ export const ListNotificationsResponseItem = zod.object({
   "status": zod.enum(['pending', 'sent', 'failed']),
   "scheduledAt": zod.coerce.date(),
   "sentAt": zod.coerce.date().nullish(),
+  "sentBy": zod.number().nullish().describe('users.id of whoever opened WhatsApp for this send. Null while the notification is still pending, and on rows created before the column existed.\n'),
+  "sentByNome": zod.string().nullish().describe('Name of the user in sentBy, resolved for display.'),
   "opened": zod.boolean().optional(),
   "clicked": zod.boolean().optional()
 })

@@ -1394,6 +1394,15 @@ components:
         sentAt:
           type: ["string", "null"]
           format: date-time
+        sentBy:
+          type: ["integer", "null"]
+          description: >
+            users.id of whoever opened WhatsApp for this send. Null while the
+            notification is still pending, and on rows created before the
+            column existed.
+        sentByNome:
+          type: ["string", "null"]
+          description: Name of the user in sentBy, resolved for display.
         opened:
           type: boolean
         clicked:

@@ -60,10 +60,20 @@ retorno, apesar de contar como "Em Risco") e só olham clientes com
 `ativo = true`.
 
 ## Registro de disparo
-Quando o barbeiro clica pra enviar (abre o WhatsApp), registrar:
-- `client_id`, `campaign_id`, `sent_at`, `sent_by`
-- Isso alimenta a métrica "Camp. Enviadas" e depois a "Taxa de Retorno"
-  (comparando quem recebeu campanha e voltou vs quem recebeu e não voltou)
+Quando o barbeiro clica pra enviar (abre o WhatsApp), `PATCH
+/notifications/:id/sent` grava `status = sent`, `sent_at` e `sent_by`. O
+`client_id` e o `campaign_id` já existem na linha desde a geração.
+
+`sent_by` vem de `req.session.userId` — nunca do corpo da requisição, que
+permitiria atribuir o envio a outra pessoa. É nulável: disparos pendentes não
+foram enviados por ninguém, e as linhas criadas antes da coluna existir não têm
+autoria (a API devolve `sentByNome: null` e a tela omite o "por ...").
+
+Hoje cada barbearia tem um usuário só, então o valor é sempre o mesmo. O campo
+existe para o histórico já estar completo quando houver logins de equipe.
+
+Isso alimenta a métrica "Camp. Enviadas" e depois a "Taxa de Retorno"
+(comparando quem recebeu campanha e voltou vs quem recebeu e não voltou).
 
 ## Cupons
 A métrica "Cupons Usados" indica que campanhas podem incluir um código de

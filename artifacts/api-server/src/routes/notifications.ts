@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, lt, isNotNull, sql, not, exists } from "drizzle-orm";
+import { eq, and, lt, isNotNull, sql, not, exists, inArray } from "drizzle-orm";
 import {
   db,
   notificationsTable,
@@ -7,6 +7,7 @@ import {
   clientsTable,
   barbershopTable,
   couponsTable,
+  usersTable,
 } from "@workspace/db";
 import { getDiasRetorno, needsRecallContactSql } from "../lib/recall";
 
@@ -60,6 +61,20 @@ router.get("/notifications", async (req, res): Promise<void> => {
     .where(and(...conditions))
     .orderBy(notificationsTable.scheduledAt);
 
+  // Nomes dos autores resolvidos de uma vez: dentro do map viraria uma consulta
+  // por linha, repetindo a mesma busca para o mesmo usuário.
+  const sentByIds = [...new Set(rows.map((n) => n.sentBy).filter((id): id is number => id != null))];
+  const sentByNomes = new Map<number, string>();
+
+  if (sentByIds.length > 0) {
+    const autores = await db
+      .select({ id: usersTable.id, nome: usersTable.nome })
+      .from(usersTable)
+      .where(inArray(usersTable.id, sentByIds));
+
+    for (const autor of autores) sentByNomes.set(autor.id, autor.nome);
+  }
+
   const result = await Promise.all(
     rows.map(async (n) => {
       const [client] = await db
@@ -111,6 +126,8 @@ router.get("/notifications", async (req, res): Promise<void> => {
         status: n.status,
         scheduledAt: n.scheduledAt.toISOString(),
         sentAt: n.sentAt?.toISOString() ?? null,
+        sentBy: n.sentBy ?? null,
+        sentByNome: sentByNomes.get(n.sentBy ?? -1) ?? null,
         opened: n.opened,
         clicked: n.clicked,
       };
@@ -302,9 +319,14 @@ router.patch("/notifications/:id/sent", async (req, res): Promise<void> => {
     return;
   }
 
+  // Autoria vem da sessão, nunca do corpo da requisição: quem enviou é quem
+  // está autenticado, e aceitar isso do cliente permitiria atribuir o envio a
+  // outra pessoa.
+  const sentBy = req.session.userId ?? null;
+
   const [updated] = await db
     .update(notificationsTable)
-    .set({ status: "sent", sentAt: new Date() })
+    .set({ status: "sent", sentAt: new Date(), sentBy })
     .where(
       and(
         eq(notificationsTable.id, id),

@@ -78,11 +78,20 @@ function PendingRow({
         </View>
 
         {enviado ? (
-          <View className="flex-row items-center gap-1">
-            <CheckCircle2 size={16} color="#10B981" />
-            <Text className="text-xs font-medium" style={{ color: "#10B981" }}>
-              Enviado
-            </Text>
+          <View className="items-end">
+            <View className="flex-row items-center gap-1">
+              <CheckCircle2 size={16} color="#10B981" />
+              <Text className="text-xs font-medium" style={{ color: "#10B981" }}>
+                Enviado
+              </Text>
+            </View>
+            {/* Autoria só aparece quando existe: disparos anteriores à coluna
+                `sent_by` não têm, e mostrar "por —" seria ruído. */}
+            {notification.sentByNome ? (
+              <Text className="mt-0.5 text-xs text-muted-foreground">
+                por {notification.sentByNome}
+              </Text>
+            ) : null}
           </View>
         ) : (
           <Pressable
