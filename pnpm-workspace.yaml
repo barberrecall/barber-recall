@@ -154,6 +154,12 @@ overrides:
   # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.27.3"
+  # Uma única cópia de @types/react no workspace inteiro. Com duas versões
+  # instaladas o TypeScript trata `React.CSSProperties` de uma como incompatível
+  # com a da outra ("two different types with this name exist"), e tanto o CRM
+  # web quanto o mockup-sandbox param de compilar. 19.1.x é a linha que
+  # corresponde ao react 19.1.0 em execução e ao que o Expo SDK 54 espera.
+  "@types/react": "19.1.17"
   # react-native-css-interop (NativeWind's engine) pulls lightningcss ~1.27.0,
   # whose win32-x64 native binary fails to load on Windows with error 126 while
   # 1.32.0 loads fine. Pinning one version fixes the Expo dev server and also
