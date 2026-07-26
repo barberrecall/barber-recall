@@ -1,0 +1,14 @@
+# Mantém o contexto de build pequeno e evita levar artefatos da máquina local
+# para dentro da imagem — node_modules de Windows quebraria binários nativos.
+node_modules
+**/node_modules
+dist
+**/dist
+.expo
+**/.expo
+*.tsbuildinfo
+**/*.tsbuildinfo
+.git
+.env
+.env.*
+attached_assets
