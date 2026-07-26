@@ -9,6 +9,10 @@
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
   "private": true,
+  "//engines": "O build remoto precisa saber a versão do Node: o api-server usa --env-file-if-exists e process.loadEnvFile, que só existem no 22+. O Nixpacks assumia 18, cujo corepack também não consegue carregar o pnpm 11 abaixo.",
+  "engines": {
+    "node": ">=24"
+  },
   "//packageManager": "Fixa a versão do pnpm para o build remoto usar a mesma daqui. Sem isto o Railway escolhe a dele: `overrides` no pnpm-workspace.yaml só existe no pnpm 10+, então um pnpm 9 não lê essa seção, compara 'config sem overrides' com 'lockfile com overrides' e aborta com ERR_PNPM_LOCKFILE_CONFIG_MISMATCH.",
   "packageManager": "pnpm@11.17.0",
   "devDependencies": {
