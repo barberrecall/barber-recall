@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and, sql } from "drizzle-orm";
 import { db, appointmentsTable, clientsTable, barbersTable, servicesTable } from "@workspace/db";
+import { syncClientRecallCache } from "../lib/recall";
 
 const router: IRouter = Router();
 
@@ -84,14 +85,7 @@ router.post("/appointments", async (req, res): Promise<void> => {
     observacoes: observacoes ?? null,
   }).returning();
 
-  await db.update(clientsTable)
-    .set({
-      ultimoAtendimento: new Date(data),
-      totalVisitas: sql`${clientsTable.totalVisitas} + 1`,
-      // Cache: o status exibido é sempre derivado em ../lib/recall.
-      status: "active",
-    })
-    .where(and(eq(clientsTable.id, clienteId), eq(clientsTable.barbershopId, barbershopId)));
+  await syncClientRecallCache(clienteId, barbershopId);
 
   res.status(201).json(await fmtAppt(a));
 });
@@ -120,6 +114,10 @@ router.patch("/appointments/:id", async (req, res): Promise<void> => {
   if (observacoes !== undefined) updates.observacoes = observacoes;
   const [a] = await db.update(appointmentsTable).set(updates).where(and(eq(appointmentsTable.id, id), eq(appointmentsTable.barbershopId, barbershopId))).returning();
   if (!a) { res.status(404).json({ error: "not found" }); return; }
+
+  // A data pode ter mudado, movendo o atendimento entre passado e futuro.
+  await syncClientRecallCache(a.clienteId, barbershopId);
+
   res.json(await fmtAppt(a));
 });
 
@@ -127,7 +125,14 @@ router.delete("/appointments/:id", async (req, res): Promise<void> => {
   const barbershopId = req.session.barbershopId!;
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
-  await db.delete(appointmentsTable).where(and(eq(appointmentsTable.id, id), eq(appointmentsTable.barbershopId, barbershopId)));
+  const [deleted] = await db.delete(appointmentsTable)
+    .where(and(eq(appointmentsTable.id, id), eq(appointmentsTable.barbershopId, barbershopId)))
+    .returning({ clienteId: appointmentsTable.clienteId });
+
+  // Sem isso o cliente ficaria com uma visita a mais e um `ultimoAtendimento`
+  // apontando para o atendimento que acabou de ser removido.
+  if (deleted) await syncClientRecallCache(deleted.clienteId, barbershopId);
+
   res.sendStatus(204);
 });
 

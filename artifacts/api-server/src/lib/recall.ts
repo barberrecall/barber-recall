@@ -83,6 +83,51 @@ export async function countByRecallStatus(
 }
 
 /**
+ * Recalcula os campos de recall em `clients` a partir dos atendimentos.
+ *
+ * Deve ser chamada depois de criar, editar ou remover um atendimento.
+ *
+ * Recalcula em vez de incrementar/decrementar de propósito: contadores
+ * incrementais só ficam certos se todo caminho de escrita lembrar de ajustá-los
+ * — e não lembravam (remover um atendimento deixava `totalVisitas` inflado e
+ * `ultimoAtendimento` apontando pra um registro apagado). Recalcular é
+ * autocorretivo e conserta dados já inconsistentes na primeira escrita.
+ *
+ * O `data <= now()` é a regra central: um atendimento com data futura não conta
+ * como visita e não pode marcar o cliente como `active` antes de ele aparecer.
+ * É o mesmo corte que `janelasEntreVisitas` usa nas métricas, então status e
+ * taxa de retorno passam a concordar sobre o que é uma visita.
+ */
+export async function syncClientRecallCache(
+  clienteId: number,
+  barbershopId: number,
+): Promise<void> {
+  const diasRetorno = await getDiasRetorno(barbershopId);
+  const limiteRisco = diasRetorno + MARGEM_RETORNO_DIAS;
+
+  await db.execute(sql`
+    update ${clientsTable} set
+      ultimo_atendimento = sub.ultimo,
+      total_visitas = sub.total,
+      status = case
+        when coalesce(sub.ultimo, ${clientsTable.createdAt}) >= now() - make_interval(days => ${diasRetorno}::int) then 'active'
+        when coalesce(sub.ultimo, ${clientsTable.createdAt}) >= now() - make_interval(days => ${limiteRisco}::int) then 'awaiting_return'
+        else 'at_risk'
+      end
+    from (
+      select max(${appointmentsTable.data}) as ultimo,
+             count(*) as total
+      from ${appointmentsTable}
+      where ${appointmentsTable.clienteId} = ${clienteId}
+        and ${appointmentsTable.barbershopId} = ${barbershopId}
+        and ${appointmentsTable.data} <= now()
+    ) sub
+    where ${clientsTable.id} = ${clienteId}
+      and ${clientsTable.barbershopId} = ${barbershopId}
+  `);
+}
+
+/**
  * CTEs base das métricas de retorno: uma linha por visita, com o dia da visita
  * (`dia`) e o dia da visita seguinte do mesmo cliente (`proxima`, `null`
  * enquanto o cliente não voltou).
