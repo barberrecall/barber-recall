@@ -22,8 +22,12 @@ import {
   getListServicesQueryKey,
   type Service,
 } from "@workspace/api-client-react";
-import { Field, FormHeader } from "@/components/form";
-import { Button, Card, EmptyState } from "@/components/ui";
+import { Field, FormHeader,
+  INK_INVERSE,
+  INK_MUTED,
+  INK,
+} from "@/components/form";
+import { Pill, Card, EmptyState } from "@/components/ui";
 
 /** Aceita "45", "45,50" e "45.50" — o teclado decimal varia entre aparelhos. */
 const parseMoney = (value: string): number => {
@@ -142,7 +146,7 @@ export default function ServicesScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background"
+      className="flex-1 bg-canvas"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <FormHeader title="Serviços" />
@@ -157,14 +161,14 @@ export default function ServicesScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#F59E0B"
+            tintColor={INK}
           />
         }
       >
         {editing ? (
           <Card className="mb-4 gap-3">
             <View className="flex-row items-center justify-between">
-              <Text className="text-sm font-semibold text-foreground">
+              <Text className="text-sm font-semibold text-ink">
                 {editing === "new" ? "Novo serviço" : "Editar serviço"}
               </Text>
               <Pressable
@@ -173,7 +177,7 @@ export default function ServicesScreen() {
                 accessibilityLabel="Fechar"
                 className="h-8 w-8 items-center justify-center active:opacity-70"
               >
-                <X size={18} color="#8A94A6" />
+                <X size={18} color={INK_MUTED} />
               </Pressable>
             </View>
 
@@ -212,10 +216,12 @@ export default function ServicesScreen() {
             </View>
 
             {formError ? (
-              <Text className="text-xs text-destructive">{formError}</Text>
+              <Text className="text-xs text-ink">{formError}</Text>
             ) : null}
 
-            <Button
+            <Pill
+              tone="ink"
+              full
               label={editing === "new" ? "Cadastrar" : "Salvar"}
               onPress={handleSave}
               loading={saving}
@@ -225,10 +231,10 @@ export default function ServicesScreen() {
               <Pressable
                 onPress={() => handleDelete(editing)}
                 accessibilityRole="button"
-                className="h-11 flex-row items-center justify-center gap-2 rounded-lg border border-destructive active:opacity-70"
+                className="h-11 flex-row items-center justify-center gap-2 rounded-pill border border-ink active:opacity-70"
               >
-                <Trash2 size={16} color="#EF4444" />
-                <Text className="text-sm font-semibold" style={{ color: "#EF4444" }}>
+                <Trash2 size={16} color={INK} />
+                <Text className="text-sm font-semibold" style={{ color: INK }}>
                   Excluir serviço
                 </Text>
               </Pressable>
@@ -238,23 +244,23 @@ export default function ServicesScreen() {
           <Pressable
             onPress={() => open("new")}
             accessibilityRole="button"
-            className="mb-4 h-11 flex-row items-center justify-center gap-2 rounded-lg bg-primary active:opacity-80"
+            className="mb-4 h-11 flex-row items-center justify-center gap-2 rounded-pill bg-hero active:opacity-80"
           >
-            <Plus size={16} color="#0A0E1A" />
-            <Text className="text-sm font-semibold text-primary-foreground">
+            <Plus size={16} color={INK_INVERSE} />
+            <Text className="text-sm font-semibold text-ink-inverse">
               Novo serviço
             </Text>
           </Pressable>
         )}
 
         {isLoading ? (
-          <ActivityIndicator color="#F59E0B" />
+          <ActivityIndicator color={INK} />
         ) : isError ? (
           <Card>
-            <Text className="text-sm text-destructive">
+            <Text className="text-sm text-ink">
               Não foi possível carregar os serviços.
             </Text>
-            <Text className="mt-1 text-xs text-muted-foreground">
+            <Text className="mt-1 text-xs text-ink-muted">
               {error instanceof Error ? error.message : "Erro desconhecido."}
             </Text>
           </Card>
@@ -270,16 +276,16 @@ export default function ServicesScreen() {
               <Card className="mb-2">
                 <View className="flex-row items-center gap-3">
                   <View className="flex-1">
-                    <Text className="text-base font-semibold text-foreground">
+                    <Text className="text-base font-semibold text-ink">
                       {service.nome}
                     </Text>
                     <View className="mt-0.5 flex-row items-center gap-2">
-                      <Text className="text-sm font-semibold text-primary">
+                      <Text className="text-sm font-semibold text-ink">
                         {money(service.valor)}
                       </Text>
                       <View className="flex-row items-center gap-1">
-                        <Clock size={11} color="#8A94A6" />
-                        <Text className="text-xs text-muted-foreground">
+                        <Clock size={11} color={INK_MUTED} />
+                        <Text className="text-xs text-ink-muted">
                           {service.duracao} min
                         </Text>
                       </View>
@@ -289,7 +295,7 @@ export default function ServicesScreen() {
                   <Switch
                     value={service.ativo}
                     onValueChange={() => handleToggle(service)}
-                    trackColor={{ false: "#3A4356", true: "#F59E0B" }}
+                    trackColor={{ false: "#E6E6EA", true: INK }}
                     thumbColor="#FFFFFF"
                   />
                 </View>

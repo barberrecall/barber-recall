@@ -11,6 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@react-navigation/bottom-tabs": "^7.18.14",
     "@tanstack/react-query": "catalog:",
     "@workspace/api-client-react": "workspace:*",
     "date-fns": "^3.6.0",

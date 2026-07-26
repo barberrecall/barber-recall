@@ -7,24 +7,13 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  Banknote,
-  TrendingUp,
-  Users,
-  Repeat,
-  Clock,
-  Receipt,
-  Ticket,
-  Send,
-  MailOpen,
-  Activity,
-} from "lucide-react-native";
+import { StatusBar } from "expo-status-bar";
 import {
   useGetReportsOverview,
   type GetReportsOverviewPeriod,
 } from "@workspace/api-client-react";
 import { FormHeader, ChipOption } from "@/components/form";
-import { Card, StatCard } from "@/components/ui";
+import { Card, HeroBlock, GroupedList, GroupedRow, INK } from "@/components/ui";
 
 const PERIODS: { value: GetReportsOverviewPeriod; label: string }[] = [
   { value: "day", label: "Hoje" },
@@ -35,6 +24,16 @@ const PERIODS: { value: GetReportsOverviewPeriod; label: string }[] = [
 
 const money = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
+/**
+ * Dez métricas como lista, não como grade de dez cartões.
+ *
+ * A versão anterior tinha dez StatCards, cada um com sua própria cor — o mesmo
+ * problema do dashboard antigo, elevado: nada tinha prioridade, e a cor era
+ * decorativa, já que "receita" não é mais verde do que "ticket médio" é âmbar.
+ *
+ * A receita do período sobe para o bloco escuro e o resto desce para listas
+ * agrupadas por assunto. Ler dez números virou percorrer uma coluna.
+ */
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const [period, setPeriod] = useState<GetReportsOverviewPeriod>("month");
@@ -42,11 +41,14 @@ export default function ReportsScreen() {
   const { data, isLoading, isError, error, refetch, isRefetching } =
     useGetReportsOverview({ period });
 
+  const periodLabel = PERIODS.find((option) => option.value === period)?.label ?? "";
+
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-canvas">
+      <StatusBar style="dark" />
       <FormHeader title="Relatórios" />
 
-      <View className="flex-row gap-2 border-b border-border px-4 pb-3">
+      <View className="flex-row gap-2 px-5 pb-4">
         {PERIODS.map((option) => (
           <ChipOption
             key={option.value}
@@ -59,107 +61,71 @@ export default function ReportsScreen() {
 
       <ScrollView
         contentContainerStyle={{
-          padding: 16,
-          paddingBottom: insets.bottom + 24,
-          gap: 12,
+          paddingHorizontal: 20,
+          paddingBottom: insets.bottom + 96,
+          gap: 20,
         }}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#F59E0B"
+            tintColor={INK}
           />
         }
       >
         {isLoading ? (
-          <View className="items-center py-12">
-            <ActivityIndicator size="large" color="#F59E0B" />
+          <View className="items-center py-16">
+            <ActivityIndicator size="large" color={INK} />
           </View>
         ) : isError || !data ? (
           <Card>
-            <Text className="text-sm text-destructive">
+            <Text className="text-base font-semibold text-ink">
               Não foi possível carregar os relatórios.
             </Text>
-            <Text className="mt-1 text-xs text-muted-foreground">
+            <Text className="mt-1 text-sm text-ink-muted">
               {error instanceof Error ? error.message : "Erro desconhecido."}
             </Text>
           </Card>
         ) : (
           <>
-            <View className="flex-row gap-3">
-              <StatCard
-                title="Receita diária"
-                value={money(data.receitaDiaria)}
-                icon={Banknote}
-                tint="#10B981"
-              />
-              <StatCard
-                title="Receita mensal"
-                value={money(data.receitaMensal)}
-                icon={TrendingUp}
-                tint="#22C55E"
-              />
-            </View>
+            <HeroBlock
+              label={`Receita · ${periodLabel}`}
+              value={money(data.receitaMensal)}
+              caption={`Ticket médio de ${money(data.ticketMedio)}`}
+              right={
+                <Text className="text-sm text-ink-inverse-muted">
+                  {money(data.receitaDiaria)} hoje
+                </Text>
+              }
+            />
 
-            <View className="flex-row gap-3">
-              <StatCard
-                title="Clientes novos"
-                value={data.clientesNovos}
-                icon={Users}
-                tint="#3B82F6"
+            <GroupedList title="Clientes">
+              <GroupedRow label="Novos" value={String(data.clientesNovos)} />
+              <GroupedRow
+                label="Recorrentes"
+                value={String(data.clientesRecorrentes)}
               />
-              <StatCard
-                title="Recorrentes"
-                value={data.clientesRecorrentes}
-                icon={Repeat}
-                tint="#8B5CF6"
+              <GroupedRow
+                label="Retorno médio"
+                value={`${data.tempoMedioRetorno} dias`}
               />
-            </View>
-
-            <View className="flex-row gap-3">
-              <StatCard
-                title="Retorno médio"
-                value={`${data.tempoMedioRetorno}d`}
-                icon={Clock}
-                tint="#EAB308"
-              />
-              <StatCard
-                title="Ticket médio"
-                value={money(data.ticketMedio)}
-                icon={Receipt}
-                tint="#F59E0B"
-              />
-            </View>
-
-            <View className="flex-row gap-3">
-              <StatCard
-                title="Cupons usados"
-                value={data.cuponsUsados}
-                icon={Ticket}
-                tint="#F97316"
-              />
-              <StatCard
-                title="Camp. enviadas"
-                value={data.campanhasEnviadas}
-                icon={Send}
-                tint="#06B6D4"
-              />
-            </View>
-
-            <View className="flex-row gap-3">
-              <StatCard
-                title="Taxa de abertura"
-                value={`${data.taxaAbertura}%`}
-                icon={MailOpen}
-                tint="#EC4899"
-              />
-              <StatCard
-                title="Taxa de retorno"
+              <GroupedRow
+                label="Taxa de retorno"
                 value={`${data.taxaRetorno}%`}
-                icon={Activity}
-                tint="#6366F1"
+                last
               />
-            </View>
+            </GroupedList>
+
+            <GroupedList title="Campanhas">
+              <GroupedRow label="Enviadas" value={String(data.campanhasEnviadas)} />
+              <GroupedRow label="Taxa de abertura" value={`${data.taxaAbertura}%`} />
+              <GroupedRow
+                label="Cupons usados"
+                value={String(data.cuponsUsados)}
+                last
+              />
+            </GroupedList>
           </>
         )}
       </ScrollView>

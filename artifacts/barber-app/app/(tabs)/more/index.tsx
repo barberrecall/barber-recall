@@ -13,7 +13,10 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import { useAuth } from "@/contexts/auth-context";
-import { Card } from "@/components/ui";
+import { Card,
+  INK_MUTED,
+  INK,
+} from "@/components/ui";
 
 /** Mesmas seções que o CRM web esconde atrás do "Mais" na barra inferior. */
 const ITEMS: { href: Href; label: string; description: string; icon: LucideIcon; tint: string }[] = [
@@ -22,42 +25,42 @@ const ITEMS: { href: Href; label: string; description: string; icon: LucideIcon;
     label: "Barbeiros",
     description: "Equipe da barbearia",
     icon: Users,
-    tint: "#3B82F6",
+    tint: INK_MUTED,
   },
   {
     href: "/more/services",
     label: "Serviços",
     description: "Preços e duração",
     icon: Scissors,
-    tint: "#10B981",
+    tint: INK_MUTED,
   },
   {
     href: "/more/coupons",
     label: "Cupons",
     description: "Descontos e códigos promocionais",
     icon: Ticket,
-    tint: "#F97316",
+    tint: INK_MUTED,
   },
   {
     href: "/more/reports",
     label: "Relatórios",
     description: "Receita, ticket médio e retorno",
     icon: BarChart3,
-    tint: "#6366F1",
+    tint: INK_MUTED,
   },
   {
     href: "/more/insights",
     label: "Insights",
     description: "Oportunidades e clientes em risco",
     icon: Lightbulb,
-    tint: "#EAB308",
+    tint: INK_MUTED,
   },
   {
     href: "/more/settings",
     label: "Configurações",
     description: "Dados da barbearia e janela de retorno",
     icon: Settings,
-    tint: "#8A94A6",
+    tint: INK_MUTED,
   },
 ];
 
@@ -81,11 +84,11 @@ export default function MoreScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      <View className="border-b border-border px-4 pb-3 pt-2">
-        <Text className="text-lg font-bold text-foreground">Mais</Text>
+    <View className="flex-1 bg-canvas" style={{ paddingTop: insets.top }}>
+      <View className="border-b border-hairline px-4 pb-3 pt-2">
+        <Text className="text-lg font-bold text-ink">Mais</Text>
         {user ? (
-          <Text className="text-xs text-muted-foreground">{user.email}</Text>
+          <Text className="text-xs text-ink-muted">{user.email}</Text>
         ) : null}
       </View>
 
@@ -108,22 +111,22 @@ export default function MoreScreen() {
               <Card>
                 <View className="flex-row items-center gap-3">
                   <View
-                    className="h-10 w-10 items-center justify-center rounded-lg"
+                    className="h-10 w-10 items-center justify-center rounded-pill"
                     style={{ backgroundColor: `${item.tint}1A` }}
                   >
                     <Icon size={18} color={item.tint} />
                   </View>
 
                   <View className="flex-1">
-                    <Text className="text-base font-semibold text-foreground">
+                    <Text className="text-base font-semibold text-ink">
                       {item.label}
                     </Text>
-                    <Text className="text-xs text-muted-foreground">
+                    <Text className="text-xs text-ink-muted">
                       {item.description}
                     </Text>
                   </View>
 
-                  <ChevronRight size={16} color="#8A94A6" />
+                  <ChevronRight size={16} color={INK_MUTED} />
                 </View>
               </Card>
             </Pressable>
@@ -138,12 +141,12 @@ export default function MoreScreen() {
           <Card>
             <View className="flex-row items-center gap-3">
               <View
-                className="h-10 w-10 items-center justify-center rounded-lg"
+                className="h-10 w-10 items-center justify-center rounded-pill"
                 style={{ backgroundColor: "#EF44441A" }}
               >
-                <LogOut size={18} color="#EF4444" />
+                <LogOut size={18} color={INK} />
               </View>
-              <Text className="text-base font-semibold" style={{ color: "#EF4444" }}>
+              <Text className="text-base font-semibold" style={{ color: INK }}>
                 Sair da conta
               </Text>
             </View>

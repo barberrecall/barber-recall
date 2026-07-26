@@ -13,7 +13,9 @@ import {
   toIsoDate,
   type ClientFormValues,
 } from "@/components/client-form";
-import { FormHeader } from "@/components/form";
+import { FormHeader,
+  INK,
+} from "@/components/form";
 import { Card } from "@/components/ui";
 
 export default function EditClientScreen() {
@@ -49,10 +51,10 @@ export default function EditClientScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-background">
+      <View className="flex-1 bg-canvas">
         <FormHeader title="Editar cliente" />
         <View className="items-center py-12">
-          <ActivityIndicator size="large" color="#F59E0B" />
+          <ActivityIndicator size="large" color={INK} />
         </View>
       </View>
     );
@@ -60,11 +62,11 @@ export default function EditClientScreen() {
 
   if (isError || !client) {
     return (
-      <View className="flex-1 bg-background">
+      <View className="flex-1 bg-canvas">
         <FormHeader title="Editar cliente" />
         <View className="p-4">
           <Card>
-            <Text className="text-sm text-destructive">
+            <Text className="text-sm text-ink">
               Não foi possível carregar o cliente.
             </Text>
           </Card>

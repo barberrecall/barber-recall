@@ -7,15 +7,12 @@ import {
   Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   ChevronLeft,
-  Phone,
-  Mail,
-  Cake,
-  CalendarDays,
   MessageCircle,
   Scissors,
   Pencil,
@@ -26,65 +23,54 @@ import {
   useGetClientAppointments,
   type Appointment,
 } from "@workspace/api-client-react";
-import { RECALL_STATUS_LABEL, RECALL_STATUS_COLOR } from "@/lib/recall-status";
-import { Card, Badge, Avatar, EmptyState } from "@/components/ui";
+import { RECALL_STATUS_LABEL_LONG } from "@/lib/recall-status";
+import {
+  HeroBlock,
+  Card,
+  Avatar,
+  EmptyState,
+  GroupedList,
+  GroupedRow,
+  SectionTitle,
+  Pill,
+  INK,
+  INK_MUTED,
+} from "@/components/ui";
+import { StatusMark } from "@/components/status-mark";
 
-const currency = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
+const money = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
 /** Datas do backend são ISO; parseISO evita a variação de fuso do `new Date`. */
 const formatDate = (iso: string, pattern: string) =>
   format(parseISO(iso), pattern, { locale: ptBR });
 
-function InfoRow({
-  icon: Icon,
-  label,
-  value,
+function AppointmentRow({
+  appointment,
+  last,
 }: {
-  icon: typeof Phone;
-  label: string;
-  value: string;
+  appointment: Appointment;
+  last: boolean;
 }) {
   return (
-    <View className="flex-row items-center gap-3">
-      <Icon size={16} color="#8A94A6" />
+    <View
+      className={`flex-row items-center justify-between px-5 py-4 ${
+        last ? "" : "border-b border-hairline"
+      }`}
+    >
       <View className="flex-1">
-        <Text className="text-xs text-muted-foreground">{label}</Text>
-        <Text className="text-sm text-foreground">{value}</Text>
+        <Text className="text-base text-ink">
+          {appointment.servicoNome ?? "Atendimento"}
+        </Text>
+        <Text className="mt-0.5 text-sm text-ink-muted">
+          {formatDate(appointment.data, "d MMM yyyy")}
+          {appointment.barbeiroNome ? ` · ${appointment.barbeiroNome}` : ""}
+        </Text>
       </View>
+
+      <Text className="text-base font-semibold text-ink">
+        {money(appointment.valorFinal)}
+      </Text>
     </View>
-  );
-}
-
-function AppointmentRow({ appointment }: { appointment: Appointment }) {
-  return (
-    <Card className="mb-2">
-      <View className="flex-row items-start justify-between">
-        <View className="flex-1 gap-0.5">
-          <Text className="text-sm font-semibold text-foreground">
-            {appointment.servicoNome ?? "Atendimento"}
-          </Text>
-          <Text className="text-xs text-muted-foreground">
-            {formatDate(appointment.data, "d 'de' MMMM 'de' yyyy', às' HH:mm")}
-          </Text>
-          {appointment.barbeiroNome ? (
-            <Text className="text-xs text-muted-foreground">
-              com {appointment.barbeiroNome}
-            </Text>
-          ) : null}
-        </View>
-
-        <View className="items-end">
-          <Text className="text-sm font-semibold text-foreground">
-            {currency(appointment.valorFinal)}
-          </Text>
-          {appointment.desconto ? (
-            <Text className="text-xs text-muted-foreground line-through">
-              {currency(appointment.valor)}
-            </Text>
-          ) : null}
-        </View>
-      </View>
-    </Card>
   );
 }
 
@@ -111,39 +97,42 @@ export default function ClientDetailScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      <View className="flex-row items-center gap-2 border-b border-border px-2 py-3">
+    <View className="flex-1 bg-canvas" style={{ paddingTop: insets.top }}>
+      <StatusBar style="dark" />
+
+      <View className="flex-row items-center justify-between px-3 py-2">
         <Pressable
           onPress={() => router.back()}
           accessibilityRole="button"
           accessibilityLabel="Voltar"
-          className="h-10 w-10 items-center justify-center rounded-lg active:opacity-70"
+          className="h-11 w-11 items-center justify-center rounded-pill active:opacity-60"
         >
-          <ChevronLeft size={22} color="#8A94A6" />
+          <ChevronLeft size={24} color={INK} />
         </Pressable>
-        <Text className="flex-1 text-lg font-bold text-foreground">Cliente</Text>
 
-        <Pressable
-          onPress={() => router.push(`/clients/${clientId}/edit`)}
-          accessibilityRole="button"
-          accessibilityLabel="Editar cliente"
-          className="h-10 w-10 items-center justify-center rounded-lg active:opacity-70"
-        >
-          <Pencil size={18} color="#8A94A6" />
-        </Pressable>
+        {client ? (
+          <Pressable
+            onPress={() => router.push(`/clients/${clientId}/edit`)}
+            accessibilityRole="button"
+            accessibilityLabel="Editar cliente"
+            className="h-11 w-11 items-center justify-center rounded-pill active:opacity-60"
+          >
+            <Pencil size={19} color={INK_MUTED} />
+          </Pressable>
+        ) : null}
       </View>
 
       {isLoading ? (
-        <View className="items-center py-12">
-          <ActivityIndicator size="large" color="#F59E0B" />
+        <View className="items-center py-16">
+          <ActivityIndicator size="large" color={INK} />
         </View>
       ) : isError || !client ? (
-        <View className="p-4">
+        <View className="px-5">
           <Card>
-            <Text className="text-sm font-medium text-destructive">
+            <Text className="text-base font-semibold text-ink">
               Não foi possível carregar o cliente.
             </Text>
-            <Text className="mt-1 text-xs text-muted-foreground">
+            <Text className="mt-1 text-sm text-ink-muted">
               {error instanceof Error ? error.message : "Cliente não encontrado."}
             </Text>
           </Card>
@@ -151,113 +140,109 @@ export default function ClientDetailScreen() {
       ) : (
         <ScrollView
           contentContainerStyle={{
-            padding: 16,
-            paddingBottom: insets.bottom + 24,
-            gap: 12,
+            paddingHorizontal: 20,
+            paddingBottom: insets.bottom + 96,
+            gap: 20,
           }}
+          showsVerticalScrollIndicator={false}
         >
-          <Card>
-            <View className="flex-row items-center gap-3">
-              <Avatar name={client.nome} />
-              <View className="flex-1">
-                <Text className="text-lg font-bold text-foreground">
-                  {client.nome}
-                </Text>
-                <View className="mt-1">
-                  <Badge
-                    label={RECALL_STATUS_LABEL[client.status]}
-                    color={RECALL_STATUS_COLOR[client.status]}
-                  />
-                </View>
-              </View>
+          {/* Nome e status como bloco de assinatura, não como cabeçalho de card. */}
+          <View className="items-center pt-2">
+            <Avatar name={client.nome} size={72} />
+            <Text className="mt-3 text-2xl font-extrabold text-ink" numberOfLines={2}>
+              {client.nome}
+            </Text>
+            <View className="mt-1.5 flex-row items-center gap-1.5">
+              <StatusMark status={client.status} showLabel={false} />
+              <Text className="text-base text-ink-muted">
+                {RECALL_STATUS_LABEL_LONG[client.status]}
+              </Text>
             </View>
-
-            <Pressable
-              onPress={openWhatsApp}
-              accessibilityRole="button"
-              className="mt-4 h-11 flex-row items-center justify-center gap-2 rounded-lg bg-primary active:opacity-80"
-            >
-              <MessageCircle size={16} color="#0A0E1A" />
-              <Text className="text-sm font-semibold text-primary-foreground">
-                Chamar no WhatsApp
-              </Text>
-            </Pressable>
-          </Card>
-
-          <View className="flex-row gap-3">
-            <Card className="flex-1">
-              <Text className="text-xs text-muted-foreground">Total de visitas</Text>
-              <Text className="mt-1 text-2xl font-bold text-foreground">
-                {client.totalVisitas}
-              </Text>
-            </Card>
-            <Card className="flex-1">
-              <Text className="text-xs text-muted-foreground">Último atendimento</Text>
-              <Text className="mt-1 text-sm font-semibold text-foreground">
-                {client.ultimoAtendimento
-                  ? formatDate(client.ultimoAtendimento, "dd/MM/yyyy")
-                  : "Nunca"}
-              </Text>
-            </Card>
           </View>
 
-          <Card className="gap-3">
-            <InfoRow icon={Phone} label="Telefone" value={client.telefone} />
-            {client.email ? (
-              <InfoRow icon={Mail} label="E-mail" value={client.email} />
-            ) : null}
+          <Pill
+            tone="ink"
+            full
+            label="Chamar no WhatsApp"
+            icon={MessageCircle}
+            onPress={openWhatsApp}
+          />
+
+          <HeroBlock
+            label="Histórico"
+            value={String(client.totalVisitas)}
+            caption={
+              client.totalVisitas === 1 ? "visita registrada" : "visitas registradas"
+            }
+            right={
+              <Text className="text-sm text-ink-inverse-muted">
+                {client.ultimoAtendimento
+                  ? formatDate(client.ultimoAtendimento, "d MMM")
+                  : "—"}
+              </Text>
+            }
+          />
+
+          <GroupedList title="Contato">
+            <GroupedRow label="Telefone" value={client.telefone} />
+            {client.email ? <GroupedRow label="E-mail" value={client.email} /> : null}
             {client.dataNascimento ? (
-              <InfoRow
-                icon={Cake}
+              <GroupedRow
                 label="Nascimento"
                 value={formatDate(client.dataNascimento, "dd/MM/yyyy")}
               />
             ) : null}
-            <InfoRow
-              icon={CalendarDays}
+            <GroupedRow
               label="Cliente desde"
               value={formatDate(client.createdAt, "dd/MM/yyyy")}
+              last
             />
-          </Card>
+          </GroupedList>
 
           {client.observacoes ? (
-            <Card>
-              <Text className="text-xs text-muted-foreground">Observações</Text>
-              <Text className="mt-1 text-sm text-foreground">{client.observacoes}</Text>
-            </Card>
+            <GroupedList title="Observações">
+              <GroupedRow label={client.observacoes} last />
+            </GroupedList>
           ) : null}
 
-          <View className="mt-2 flex-row items-center justify-between">
-            <Text className="text-base font-semibold text-foreground">
-              Histórico de atendimentos
-            </Text>
-
-            <Pressable
-              onPress={() =>
-                router.push(`/appointments/new?clienteId=${clientId}`)
+          <View>
+            <SectionTitle
+              title="Atendimentos"
+              right={
+                <Pressable
+                  onPress={() => router.push(`/appointments/new?clienteId=${clientId}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Registrar atendimento"
+                  className="h-9 flex-row items-center gap-1 rounded-pill bg-surface px-3 active:opacity-70"
+                >
+                  <Plus size={14} color={INK} />
+                  <Text className="text-sm font-semibold text-ink">Novo</Text>
+                </Pressable>
               }
-              accessibilityRole="button"
-              accessibilityLabel="Registrar atendimento para este cliente"
-              className="h-9 flex-row items-center gap-1.5 rounded-lg border border-border px-3 active:opacity-70"
-            >
-              <Plus size={14} color="#F59E0B" />
-              <Text className="text-xs font-semibold text-primary">Novo</Text>
-            </Pressable>
-          </View>
-
-          {loadingAppointments ? (
-            <ActivityIndicator color="#F59E0B" />
-          ) : appointments && appointments.length > 0 ? (
-            appointments.map((appointment) => (
-              <AppointmentRow key={appointment.id} appointment={appointment} />
-            ))
-          ) : (
-            <EmptyState
-              icon={Scissors}
-              title="Sem atendimentos"
-              description="Este cliente ainda não tem atendimentos registrados."
             />
-          )}
+
+            {loadingAppointments ? (
+              <ActivityIndicator color={INK} />
+            ) : appointments && appointments.length > 0 ? (
+              <View className="overflow-hidden rounded-card bg-surface">
+                {appointments.map((appointment, index) => (
+                  <AppointmentRow
+                    key={appointment.id}
+                    appointment={appointment}
+                    last={index === appointments.length - 1}
+                  />
+                ))}
+              </View>
+            ) : (
+              <Card>
+                <EmptyState
+                  icon={Scissors}
+                  title="Sem atendimentos"
+                  description="Nada registrado para este cliente ainda."
+                />
+              </Card>
+            )}
+          </View>
         </ScrollView>
       )}
     </View>

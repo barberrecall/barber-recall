@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Field, FormHeader } from "@/components/form";
-import { Button } from "@/components/ui";
+import { Pill } from "@/components/ui";
 
 export interface ClientFormValues {
   nome: string;
@@ -101,7 +101,7 @@ export function ClientForm({
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background"
+      className="flex-1 bg-canvas"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <FormHeader title={title} />
@@ -168,9 +168,9 @@ export function ClientForm({
           editable={!submitting}
         />
 
-        <Button label={submitLabel} onPress={handleSubmit} loading={submitting} />
+        <Pill label={submitLabel} onPress={handleSubmit} loading={submitting} />
 
-        <Text className="text-center text-xs text-muted-foreground">
+        <Text className="text-center text-xs text-ink-muted">
           O WhatsApp é usado nas campanhas de retorno.
         </Text>
       </ScrollView>

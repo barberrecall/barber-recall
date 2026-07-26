@@ -20,15 +20,18 @@ import {
   type Insight,
   type InsightTipo,
 } from "@workspace/api-client-react";
-import { FormHeader } from "@/components/form";
+import { FormHeader,
+  INK_MUTED,
+  INK,
+} from "@/components/form";
 import { Card, EmptyState } from "@/components/ui";
 
 /** Cada tipo de insight tem peso diferente e merece leitura visual distinta. */
 const TIPO_STYLE: Record<InsightTipo, { icon: LucideIcon; tint: string }> = {
-  warning: { icon: AlertTriangle, tint: "#EF4444" },
-  opportunity: { icon: Lightbulb, tint: "#F59E0B" },
-  success: { icon: CheckCircle2, tint: "#10B981" },
-  info: { icon: Info, tint: "#3B82F6" },
+  warning: { icon: AlertTriangle, tint: INK_MUTED },
+  opportunity: { icon: Lightbulb, tint: INK },
+  success: { icon: CheckCircle2, tint: INK_MUTED },
+  info: { icon: Info, tint: INK_MUTED },
 };
 
 function InsightRow({ insight }: { insight: Insight }) {
@@ -40,7 +43,7 @@ function InsightRow({ insight }: { insight: Insight }) {
       <View className="flex-row gap-3">
         <Icon size={18} color={style.tint} />
         <View className="flex-1">
-          <Text className="text-sm text-foreground">{insight.mensagem}</Text>
+          <Text className="text-sm text-ink">{insight.mensagem}</Text>
           {insight.impacto != null ? (
             <Text className="mt-1 text-xs font-semibold" style={{ color: style.tint }}>
               Impacto estimado: R$ {insight.impacto.toFixed(2).replace(".", ",")}
@@ -57,7 +60,7 @@ export default function InsightsScreen() {
   const { data, isLoading, isError, error, refetch, isRefetching } = useGetInsights();
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-canvas">
       <FormHeader title="Insights" />
 
       <ScrollView
@@ -69,20 +72,20 @@ export default function InsightsScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#F59E0B"
+            tintColor={INK}
           />
         }
       >
         {isLoading ? (
           <View className="items-center py-12">
-            <ActivityIndicator size="large" color="#F59E0B" />
+            <ActivityIndicator size="large" color={INK} />
           </View>
         ) : isError || !data ? (
           <Card>
-            <Text className="text-sm text-destructive">
+            <Text className="text-sm text-ink">
               Não foi possível carregar os insights.
             </Text>
-            <Text className="mt-1 text-xs text-muted-foreground">
+            <Text className="mt-1 text-xs text-ink-muted">
               {error instanceof Error ? error.message : "Erro desconhecido."}
             </Text>
           </Card>
@@ -91,15 +94,15 @@ export default function InsightsScreen() {
             <View className="mb-3 flex-row gap-3">
               <Card className="flex-1">
                 <View className="flex-row items-center justify-between">
-                  <Text className="text-xs text-muted-foreground">
+                  <Text className="text-xs text-ink-muted">
                     Receita a recuperar
                   </Text>
-                  <TrendingUp size={16} color="#10B981" />
+                  <TrendingUp size={16} color={INK} />
                 </View>
-                <Text className="mt-1 text-xl font-bold text-foreground">
+                <Text className="mt-1 text-xl font-bold text-ink">
                   R$ {data.potentialRevenue.toFixed(2).replace(".", ",")}
                 </Text>
-                <Text className="mt-0.5 text-xs text-muted-foreground">
+                <Text className="mt-0.5 text-xs text-ink-muted">
                   {data.clientesEmRisco} cliente(s) em risco
                 </Text>
               </Card>
@@ -107,12 +110,12 @@ export default function InsightsScreen() {
 
             <Card className="mb-4">
               <View className="flex-row items-center gap-2">
-                <CalendarClock size={16} color="#6366F1" />
-                <Text className="text-xs text-muted-foreground">
+                <CalendarClock size={16} color={INK_MUTED} />
+                <Text className="text-xs text-ink-muted">
                   Melhor momento para disparar
                 </Text>
               </View>
-              <Text className="mt-1 text-sm font-semibold text-foreground">
+              <Text className="mt-1 text-sm font-semibold text-ink">
                 {data.melhorDiaCampanha} · {data.melhorHorario}
               </Text>
             </Card>

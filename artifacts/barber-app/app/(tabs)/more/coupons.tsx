@@ -24,8 +24,11 @@ import {
   type Coupon,
   type CouponInputTipo,
 } from "@workspace/api-client-react";
-import { Field, FormHeader, ChipOption } from "@/components/form";
-import { Button, Card, Badge, EmptyState } from "@/components/ui";
+import { Field, FormHeader, ChipOption,
+  INK_INVERSE,
+  INK,
+} from "@/components/form";
+import { Pill, Card, Badge, EmptyState } from "@/components/ui";
 import { toIsoDate, fromIsoDate } from "@/components/client-form";
 
 const formatDiscount = (coupon: Coupon) =>
@@ -172,7 +175,7 @@ export default function CouponsScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background"
+      className="flex-1 bg-canvas"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <FormHeader title="Cupons" />
@@ -184,14 +187,14 @@ export default function CouponsScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#F59E0B"
+            tintColor={INK}
           />
         }
       >
         {editing ? (
           <Card className="mb-4 gap-3">
             <View className="flex-row items-center justify-between">
-              <Text className="text-sm font-semibold text-foreground">
+              <Text className="text-sm font-semibold text-ink">
                 {editing === "new" ? "Novo cupom" : "Editar cupom"}
               </Text>
               <Pressable
@@ -200,7 +203,7 @@ export default function CouponsScreen() {
                 accessibilityLabel="Fechar"
                 className="h-8 w-8 items-center justify-center active:opacity-70"
               >
-                <X size={18} color="#8A94A6" />
+                <X size={18} />
               </Pressable>
             </View>
 
@@ -214,8 +217,8 @@ export default function CouponsScreen() {
             />
 
             <View className="gap-2">
-              <Text className="text-sm font-medium text-foreground">
-                Tipo de desconto<Text className="text-destructive"> *</Text>
+              <Text className="text-sm font-medium text-ink">
+                Tipo de desconto<Text className="text-ink"> *</Text>
               </Text>
               <View className="flex-row gap-2">
                 <ChipOption
@@ -265,10 +268,12 @@ export default function CouponsScreen() {
             </View>
 
             {formError ? (
-              <Text className="text-xs text-destructive">{formError}</Text>
+              <Text className="text-xs text-ink">{formError}</Text>
             ) : null}
 
-            <Button
+            <Pill
+              tone="ink"
+              full
               label={editing === "new" ? "Criar cupom" : "Salvar"}
               onPress={handleSave}
               loading={saving}
@@ -278,10 +283,10 @@ export default function CouponsScreen() {
               <Pressable
                 onPress={() => handleDelete(editing)}
                 accessibilityRole="button"
-                className="h-11 flex-row items-center justify-center gap-2 rounded-lg border border-destructive active:opacity-70"
+                className="h-11 flex-row items-center justify-center gap-2 rounded-pill border border-ink active:opacity-70"
               >
-                <Trash2 size={16} color="#EF4444" />
-                <Text className="text-sm font-semibold" style={{ color: "#EF4444" }}>
+                <Trash2 size={16} color={INK} />
+                <Text className="text-sm font-semibold" style={{ color: INK }}>
                   Excluir cupom
                 </Text>
               </Pressable>
@@ -291,23 +296,23 @@ export default function CouponsScreen() {
           <Pressable
             onPress={() => open("new")}
             accessibilityRole="button"
-            className="mb-4 h-11 flex-row items-center justify-center gap-2 rounded-lg bg-primary active:opacity-80"
+            className="mb-4 h-11 flex-row items-center justify-center gap-2 rounded-pill bg-hero active:opacity-80"
           >
-            <Plus size={16} color="#0A0E1A" />
-            <Text className="text-sm font-semibold text-primary-foreground">
+            <Plus size={16} color={INK_INVERSE} />
+            <Text className="text-sm font-semibold text-ink-inverse">
               Novo cupom
             </Text>
           </Pressable>
         )}
 
         {isLoading ? (
-          <ActivityIndicator color="#F59E0B" />
+          <ActivityIndicator color={INK} />
         ) : isError ? (
           <Card>
-            <Text className="text-sm text-destructive">
+            <Text className="text-sm text-ink">
               Não foi possível carregar os cupons.
             </Text>
-            <Text className="mt-1 text-xs text-muted-foreground">
+            <Text className="mt-1 text-xs text-ink-muted">
               {error instanceof Error ? error.message : "Erro desconhecido."}
             </Text>
           </Card>
@@ -330,10 +335,10 @@ export default function CouponsScreen() {
                 <Card className="mb-2">
                   <View className="flex-row items-start justify-between">
                     <View className="flex-1">
-                      <Text className="text-base font-bold text-foreground">
+                      <Text className="text-base font-bold text-ink">
                         {coupon.codigo}
                       </Text>
-                      <Text className="text-xs text-muted-foreground">
+                      <Text className="text-xs text-ink-muted">
                         {formatDiscount(coupon)} de desconto
                       </Text>
 
@@ -341,31 +346,31 @@ export default function CouponsScreen() {
                           pedindo uma ação diferente do barbeiro. */}
                       <View className="mt-1.5 flex-row flex-wrap gap-2">
                         {!coupon.ativo ? (
-                          <Badge label="Desligado" color="#8A94A6" />
+                          <Badge label="Desligado" />
                         ) : null}
-                        {expirado ? <Badge label="Vencido" color="#EF4444" /> : null}
-                        {esgotado ? <Badge label="Esgotado" color="#F97316" /> : null}
+                        {expirado ? <Badge label="Vencido" strong /> : null}
+                        {esgotado ? <Badge label="Esgotado" /> : null}
                         {coupon.ativo && !expirado && !esgotado ? (
-                          <Badge label="Válido" color="#10B981" />
+                          <Badge label="Válido" strong />
                         ) : null}
                       </View>
                     </View>
 
                     <View className="items-end gap-1">
-                      <Text className="text-sm font-semibold text-foreground">
+                      <Text className="text-sm font-semibold text-ink">
                         {coupon.usoAtual}
                         {coupon.usoMaximo != null ? `/${coupon.usoMaximo}` : ""}
                       </Text>
-                      <Text className="text-xs text-muted-foreground">usos</Text>
+                      <Text className="text-xs text-ink-muted">usos</Text>
                       {coupon.validade ? (
-                        <Text className="text-xs text-muted-foreground">
+                        <Text className="text-xs text-ink-muted">
                           até {format(parseISO(coupon.validade), "dd/MM/yy")}
                         </Text>
                       ) : null}
                       <Switch
                         value={coupon.ativo}
                         onValueChange={() => handleToggle(coupon)}
-                        trackColor={{ false: "#3A4356", true: "#F59E0B" }}
+                        trackColor={{ false: "#E6E6EA", true: INK }}
                         thumbColor="#FFFFFF"
                       />
                     </View>

@@ -1,149 +1,181 @@
 import { View, Text, ScrollView, RefreshControl, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  Users,
-  TrendingUp,
-  Clock,
-  AlertCircle,
-  CalendarDays,
-  Banknote,
-  Ticket,
-  Activity,
-} from "lucide-react-native";
+import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
+import { ChevronRight } from "lucide-react-native";
 import {
   useGetDashboardStats,
   useGetDashboardCharts,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/auth-context";
-import { StatCard, Card } from "@/components/ui";
+import {
+  ScreenHeader,
+  HeroBlock,
+  Card,
+  Chip,
+  GroupedList,
+  GroupedRow,
+  SectionTitle,
+  INK,
+  INK_MUTED,
+} from "@/components/ui";
 import { BarChartCard, AreaChartCard } from "@/components/charts";
 
+const money = (value: number) =>
+  `R$ ${value.toFixed(2).replace(".", ",")}`;
+
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Bom dia";
+  if (hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+/**
+ * Um número por vez, não oito iguais.
+ *
+ * A versão anterior mostrava 8 StatCards idênticos numa grade 2×4 — o layout
+ * mais indistinguível que existe, e que fazia o faturamento do dia competir por
+ * atenção com "cupons usados".
+ *
+ * Aqui o faturamento fica sozinho no bloco escuro e o resto desce para uma lista
+ * agrupada, onde cada linha é um par rótulo/valor legível de relance. Ler oito
+ * números virou ler uma coluna, não varrer uma grade.
+ */
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { user } = useAuth();
 
-  // The generated React Query hook from the OpenAPI spec — reused verbatim from
-  // the web build. It needs no native-specific variant: the shared customFetch
-  // prepends the base URL and attaches the Bearer token.
   const { data: stats, isLoading, isError, error, refetch, isRefetching } =
     useGetDashboardStats();
 
   const { data: charts, refetch: refetchCharts } = useGetDashboardCharts();
 
-  // Puxar para atualizar precisa recarregar KPIs e gráficos juntos, senão os
-  // números e as curvas passam a contar histórias de momentos diferentes.
+  // Puxar para atualizar recarrega KPIs e gráficos juntos, senão os números e as
+  // curvas passam a contar histórias de momentos diferentes.
   const handleRefresh = () => {
     void refetch();
     void refetchCharts();
   };
 
-  return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      <View className="flex-row items-center justify-between border-b border-border px-4 py-3">
-        <View>
-          <Text className="text-lg font-bold text-foreground">Dashboard</Text>
-          {user ? (
-            <Text className="text-xs text-muted-foreground">
-              Olá, {user.nome}
-            </Text>
-          ) : null}
-        </View>
+  const primeiroNome = user?.nome?.split(" ")[0] ?? "";
 
-      </View>
+  return (
+    <View className="flex-1 bg-canvas" style={{ paddingTop: insets.top }}>
+      <StatusBar style="dark" />
+
+      <ScreenHeader
+        eyebrow={greeting()}
+        title={primeiroNome || "Início"}
+        right={<Chip label="Hoje" />}
+      />
 
       <ScrollView
-        contentContainerClassName="p-4 gap-3"
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: insets.bottom + 96,
+          gap: 20,
+        }}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={handleRefresh}
-            tintColor="#F59E0B"
+            tintColor={INK}
           />
         }
       >
         {isLoading ? (
-          <View className="items-center py-12">
-            <ActivityIndicator size="large" color="#F59E0B" />
+          <View className="items-center py-16">
+            <ActivityIndicator size="large" color={INK} />
           </View>
         ) : isError ? (
           <Card>
-            <Text className="text-sm font-medium text-destructive">
+            <Text className="text-base font-semibold text-ink">
               Não foi possível carregar as métricas.
             </Text>
-            <Text className="mt-1 text-xs text-muted-foreground">
+            <Text className="mt-1 text-sm text-ink-muted">
               {error instanceof Error ? error.message : "Erro desconhecido."}
             </Text>
-            <Text className="mt-2 text-xs text-muted-foreground">
+            <Text className="mt-3 text-sm text-ink-muted">
               Arraste para baixo para tentar novamente.
             </Text>
           </Card>
         ) : stats ? (
           <>
-            <View className="flex-row gap-3">
-              <StatCard
-                title="Clientes Ativos"
-                value={stats.clientesAtivos}
-                icon={Users}
-                tint="#3B82F6"
-              />
-              <StatCard
-                title="Novos Hoje"
-                value={stats.clientesNovosHoje}
-                icon={TrendingUp}
-                tint="#22C55E"
-              />
-            </View>
+            {/* O número que importa no dia, sozinho e grande. */}
+            <HeroBlock
+              label="Faturamento de hoje"
+              value={money(stats.faturamentoHoje)}
+              caption={`${stats.atendimentosHoje} ${
+                stats.atendimentosHoje === 1 ? "atendimento" : "atendimentos"
+              } hoje`}
+            >
+              <View className="mt-5 flex-row items-center gap-6 border-t border-white/10 pt-4">
+                <View>
+                  <Text className="text-sm text-ink-inverse-muted">
+                    Taxa de retorno
+                  </Text>
+                  <Text className="mt-0.5 text-xl font-bold text-ink-inverse">
+                    {stats.taxaRetorno}%
+                  </Text>
+                </View>
+                <View>
+                  <Text className="text-sm text-ink-inverse-muted">
+                    Clientes ativos
+                  </Text>
+                  <Text className="mt-0.5 text-xl font-bold text-ink-inverse">
+                    {stats.clientesAtivos}
+                  </Text>
+                </View>
+              </View>
+            </HeroBlock>
 
-            <View className="flex-row gap-3">
-              <StatCard
-                title="Aguard. Retorno"
-                value={stats.clientesAguardandoRetorno}
-                icon={Clock}
-                tint="#EAB308"
+            {/*
+              Recall primeiro, e em ordem de urgência: Em Risco no topo porque é
+              quem exige contato hoje. A grade anterior enterrava isso no meio de
+              oito números de peso visual igual.
+            */}
+            <GroupedList title="Recall">
+              <GroupedRow
+                label="Em risco"
+                value={String(stats.clientesEmRisco)}
+                onPress={() => router.push("/clients")}
               />
-              <StatCard
-                title="Em Risco"
-                value={stats.clientesEmRisco}
-                icon={AlertCircle}
-                tint="#EF4444"
+              <GroupedRow
+                label="Aguardando retorno"
+                value={String(stats.clientesAguardandoRetorno)}
+                onPress={() => router.push("/clients")}
               />
-            </View>
+              <GroupedRow
+                label="Novos hoje"
+                value={String(stats.clientesNovosHoje)}
+                last
+                onPress={() => router.push("/clients")}
+              />
+            </GroupedList>
 
-            <View className="flex-row gap-3">
-              <StatCard
-                title="Atend. Hoje"
-                value={stats.atendimentosHoje}
-                icon={CalendarDays}
-                tint="#A855F7"
+            <GroupedList title="Movimento">
+              <GroupedRow
+                label="Atendimentos hoje"
+                value={String(stats.atendimentosHoje)}
+                onPress={() => router.push("/appointments")}
               />
-              <StatCard
-                title="Faturamento"
-                value={`R$ ${stats.faturamentoHoje.toFixed(2)}`}
-                icon={Banknote}
-                tint="#10B981"
+              <GroupedRow
+                label="Cupons usados"
+                value={String(stats.cuponsUtilizados)}
+                last
+                onPress={() => router.push("/more/coupons")}
               />
-            </View>
-
-            <View className="flex-row gap-3">
-              <StatCard
-                title="Cupons Usados"
-                value={stats.cuponsUtilizados}
-                icon={Ticket}
-                tint="#F97316"
-              />
-              <StatCard
-                title="Taxa Retorno"
-                value={`${stats.taxaRetorno}%`}
-                icon={Activity}
-                tint="#6366F1"
-              />
-            </View>
+            </GroupedList>
           </>
         ) : null}
 
         {charts ? (
           <>
+            <SectionTitle title="Evolução" />
+
             <AreaChartCard
               title="Receita"
               subtitle="Últimos 6 meses"

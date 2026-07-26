@@ -18,8 +18,10 @@ import {
   getListClientsQueryKey,
   getGetDashboardStatsQueryKey,
 } from "@workspace/api-client-react";
-import { Field, FormHeader } from "@/components/form";
-import { Button, Card } from "@/components/ui";
+import { Field, FormHeader,
+  INK,
+} from "@/components/form";
+import { Pill, Card } from "@/components/ui";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -97,10 +99,10 @@ export default function SettingsScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-background">
+      <View className="flex-1 bg-canvas">
         <FormHeader title="Configurações" />
         <View className="items-center py-12">
-          <ActivityIndicator size="large" color="#F59E0B" />
+          <ActivityIndicator size="large" color={INK} />
         </View>
       </View>
     );
@@ -108,7 +110,7 @@ export default function SettingsScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background"
+      className="flex-1 bg-canvas"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <FormHeader title="Configurações" />
@@ -172,14 +174,14 @@ export default function SettingsScreen() {
 
         <Card>
           <View className="flex-row gap-2">
-            <Info size={16} color="#F59E0B" />
-            <Text className="flex-1 text-xs text-muted-foreground">
+            <Info size={16} color={INK} />
+            <Text className="flex-1 text-xs text-ink-muted">
               A janela de retorno define quando um cliente deixa de ser{" "}
-              <Text className="font-semibold text-foreground">Ativo</Text>. Depois
+              <Text className="font-semibold text-ink">Ativo</Text>. Depois
               dela ele passa a{" "}
-              <Text className="font-semibold text-foreground">Aguardando Retorno</Text>{" "}
+              <Text className="font-semibold text-ink">Aguardando Retorno</Text>{" "}
               e, sete dias mais tarde, a{" "}
-              <Text className="font-semibold text-foreground">Em Risco</Text>.
+              <Text className="font-semibold text-ink">Em Risco</Text>.
               {"\n\n"}
               Mudar esse número reclassifica todos os clientes de uma vez e é o
               único jeito de antecipar os disparos — baixar o prazo de uma
@@ -199,9 +201,11 @@ export default function SettingsScreen() {
           editable={!update.isPending}
         />
 
-        {error ? <Text className="text-xs text-destructive">{error}</Text> : null}
+        {error ? <Text className="text-xs text-ink">{error}</Text> : null}
 
-        <Button
+        <Pill
+          tone="ink"
+          full
           label="Salvar configurações"
           onPress={handleSave}
           loading={update.isPending}

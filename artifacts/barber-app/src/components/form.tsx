@@ -1,60 +1,40 @@
-import { View, Text, TextInput, Pressable, type TextInputProps } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import type { ReactNode } from "react";
 import { ChevronLeft } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { INK, INK_MUTED, INK_INVERSE } from "./ui";
 
-/** Campo de texto com rótulo e erro, usado pelos formulários do app. */
-export function Field({
-  label,
-  error,
-  required = false,
-  ...props
-}: TextInputProps & { label: string; error?: string; required?: boolean }) {
-  return (
-    <View className="gap-1.5">
-      <Text className="text-sm font-medium text-foreground">
-        {label}
-        {required ? <Text className="text-destructive"> *</Text> : null}
-      </Text>
+export { Input as Field } from "./ui";
 
-      <TextInput
-        placeholderTextColor="#8A94A6"
-        className={`min-h-12 rounded-lg border bg-card px-3 py-2.5 text-base text-foreground ${
-          error ? "border-destructive" : "border-input"
-        }`}
-        {...props}
-      />
-
-      {error ? <Text className="text-xs text-destructive">{error}</Text> : null}
-    </View>
-  );
-}
-
-/** Cabeçalho com botão voltar, comum a todas as telas de formulário. */
-export function FormHeader({ title }: { title: string }) {
+/**
+ * Cabeçalho de formulário: voltar + título, no mesmo padrão tipográfico das
+ * telas de lista mas sem o sobrenome, porque um formulário não é uma seção.
+ */
+export function FormHeader({ title, right }: { title: string; right?: ReactNode }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   return (
-    <View
-      className="flex-row items-center gap-2 border-b border-border px-2 py-3"
-      style={{ paddingTop: insets.top + 12 }}
-    >
-      <Pressable
-        onPress={() => router.back()}
-        accessibilityRole="button"
-        accessibilityLabel="Voltar"
-        className="h-10 w-10 items-center justify-center rounded-lg active:opacity-70"
-      >
-        <ChevronLeft size={22} color="#8A94A6" />
-      </Pressable>
-      <Text className="text-lg font-bold text-foreground">{title}</Text>
+    <View style={{ paddingTop: insets.top }}>
+      <View className="flex-row items-center justify-between px-3 py-2">
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+          className="h-11 w-11 items-center justify-center rounded-pill active:opacity-60"
+        >
+          <ChevronLeft size={24} color={INK} />
+        </Pressable>
+        {right}
+      </View>
+
+      <Text className="px-5 pb-4 text-title font-extrabold text-ink">{title}</Text>
     </View>
   );
 }
 
-/** Opção selecionável em lista horizontal (barbeiro, serviço, etc.). */
+/** Opção em pílula, para escolhas curtas em linha. */
 export function ChipOption({
   label,
   selected,
@@ -69,13 +49,13 @@ export function ChipOption({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected }}
-      className={`rounded-full border px-3 py-2 active:opacity-70 ${
-        selected ? "border-primary bg-primary" : "border-border bg-transparent"
+      className={`h-10 items-center justify-center rounded-pill px-4 active:opacity-70 ${
+        selected ? "bg-hero" : "bg-field"
       }`}
     >
       <Text
-        className={`text-xs font-medium ${
-          selected ? "text-primary-foreground" : "text-muted-foreground"
+        className={`text-sm font-semibold ${
+          selected ? "text-ink-inverse" : "text-ink-muted"
         }`}
       >
         {label}
@@ -84,13 +64,21 @@ export function ChipOption({
   );
 }
 
-export function FormSection({ title, children }: { title: string; children: ReactNode }) {
+export function FormSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
   return (
-    <View className="gap-2">
-      <Text className="text-xs font-medium uppercase text-muted-foreground">
+    <View className="gap-3">
+      <Text className="text-eyebrow font-semibold uppercase tracking-wider text-ink-muted">
         {title}
       </Text>
       {children}
     </View>
   );
 }
+
+export { INK, INK_MUTED, INK_INVERSE };

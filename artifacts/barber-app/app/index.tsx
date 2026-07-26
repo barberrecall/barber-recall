@@ -1,6 +1,7 @@
 import { View, ActivityIndicator } from "react-native";
 import { Redirect } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
+import { INK } from "@/components/ui";
 
 /**
  * Entry gate. While the stored token is being read from SecureStore the auth
@@ -12,8 +13,8 @@ export default function Index() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color="#F59E0B" />
+      <View className="flex-1 items-center justify-center bg-canvas">
+        <ActivityIndicator size="large" color={INK} />
       </View>
     );
   }

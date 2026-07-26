@@ -24,8 +24,10 @@ import {
   getListNotificationsQueryKey,
   type CampaignInputTipo,
 } from "@workspace/api-client-react";
-import { Field, FormHeader, ChipOption, FormSection } from "@/components/form";
-import { Button, Card } from "@/components/ui";
+import { Field, FormHeader, ChipOption, FormSection,
+  INK,
+} from "@/components/form";
+import { Pill, Card } from "@/components/ui";
 import { CAMPAIGN_TIPO_LABEL, describeCampaignTrigger } from "@/lib/campaign-labels";
 
 const TIPOS: CampaignInputTipo[] = ["return", "birthday", "loyalty", "custom"];
@@ -205,10 +207,10 @@ export default function CampaignEditScreen() {
 
   if (!isNew && isLoading) {
     return (
-      <View className="flex-1 bg-background">
+      <View className="flex-1 bg-canvas">
         <FormHeader title="Editar campanha" />
         <View className="items-center py-12">
-          <ActivityIndicator size="large" color="#F59E0B" />
+          <ActivityIndicator size="large" color={INK} />
         </View>
       </View>
     );
@@ -216,7 +218,7 @@ export default function CampaignEditScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background"
+      className="flex-1 bg-canvas"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <FormHeader title={isNew ? "Nova campanha" : "Editar campanha"} />
@@ -261,7 +263,7 @@ export default function CampaignEditScreen() {
         />
 
         {Number.isInteger(diasNumero) ? (
-          <Text className="-mt-3 text-xs text-muted-foreground">
+          <Text className="-mt-3 text-xs text-ink-muted">
             Dispara {describeCampaignTrigger(tipo, diasNumero)}.
           </Text>
         ) : null}
@@ -269,11 +271,11 @@ export default function CampaignEditScreen() {
         {diasIgnorado ? (
           <Card>
             <View className="flex-row gap-2">
-              <Info size={16} color="#EAB308" />
-              <Text className="flex-1 text-xs text-muted-foreground">
+              <Info size={16} color={INK} />
+              <Text className="flex-1 text-xs text-ink-muted">
                 Este número está abaixo da janela de retorno da barbearia
                 ({diasRetorno} dias), então{" "}
-                <Text className="font-semibold text-foreground">
+                <Text className="font-semibold text-ink">
                   não vai antecipar o disparo
                 </Text>
                 . O recall é o piso: quem a barbearia ainda considera Ativo não
@@ -297,7 +299,7 @@ export default function CampaignEditScreen() {
             editable={!saving}
           />
 
-          <Text className="text-xs text-muted-foreground">
+          <Text className="text-xs text-ink-muted">
             Toque para inserir — o servidor substitui pelo valor real:
           </Text>
           <View className="flex-row flex-wrap gap-2">
@@ -308,9 +310,9 @@ export default function CampaignEditScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Inserir ${variavel.hint}`}
                 disabled={saving}
-                className="rounded-md border border-border px-2 py-1 active:opacity-70"
+                className="rounded-pill border border-hairline px-2 py-1 active:opacity-70"
               >
-                <Text className="text-xs font-medium text-primary">
+                <Text className="text-xs font-medium text-ink">
                   {variavel.token}
                 </Text>
               </Pressable>
@@ -335,17 +337,19 @@ export default function CampaignEditScreen() {
                 />
               ))}
             </View>
-            <Text className="text-xs text-muted-foreground">
+            <Text className="text-xs text-ink-muted">
               O código entra na mensagem onde estiver {"{cupom_texto}"}.
             </Text>
           </FormSection>
         ) : null}
 
         {formError ? (
-          <Text className="text-xs text-destructive">{formError}</Text>
+          <Text className="text-xs text-ink">{formError}</Text>
         ) : null}
 
-        <Button
+        <Pill
+          tone="ink"
+          full
           label={isNew ? "Criar campanha" : "Salvar alterações"}
           onPress={handleSave}
           loading={saving}
@@ -355,10 +359,10 @@ export default function CampaignEditScreen() {
           <Pressable
             onPress={handleDelete}
             accessibilityRole="button"
-            className="h-11 flex-row items-center justify-center gap-2 rounded-lg border border-destructive active:opacity-70"
+            className="h-11 flex-row items-center justify-center gap-2 rounded-pill border border-ink active:opacity-70"
           >
-            <Trash2 size={16} color="#EF4444" />
-            <Text className="text-sm font-semibold" style={{ color: "#EF4444" }}>
+            <Trash2 size={16} color={INK} />
+            <Text className="text-sm font-semibold" style={{ color: INK }}>
               Excluir campanha
             </Text>
           </Pressable>

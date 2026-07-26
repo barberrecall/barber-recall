@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, Pressable, useColorScheme, type LayoutChangeEvent } from "react-native";
+import { View, Text, Pressable, type LayoutChangeEvent } from "react-native";
 import Svg, {
   Path,
   Rect,
@@ -19,20 +19,17 @@ import type { ChartPoint } from "@workspace/api-client-react";
  * custam caro — victory-native v41 exige @shopify/react-native-skia, um módulo
  * nativo que inviabilizaria rodar no Expo Go.
  *
- * A cor da série muda por tema em vez de ser a mesma nos dois. O amber da marca
- * (#F59E0B) rende só 2.09:1 contra superfície clara, abaixo do mínimo de 3:1;
- * o passo #D97706 passa mantendo a identidade. No escuro o amber original tem
- * contraste de sobra. (Verificado com o validador de paleta, não no olho.)
+ * Monocromático, como o resto do app: a série é quase preta sobre cartão branco.
+ * Isso resolveu de graça o problema que o âmbar tinha aqui — ele rendia só
+ * 2.09:1 de contraste contra superfície clara, abaixo do mínimo de 3:1, e
+ * obrigava a usar um tom mais escuro só nos gráficos. Preto sobre branco passa
+ * com folga e é a mesma tinta dos títulos.
  */
-const SERIES_DARK = "#F59E0B";
-const SERIES_LIGHT = "#D97706";
+const SERIES = "#141416";
+const GRID = "#E6E6EA";
 
-const GRID_DARK = "#1C2333";
-const GRID_LIGHT = "#E2E8F0";
-
-/** Cor do card em cada tema, usada no anel que separa o marcador da linha. */
-const SURFACE_DARK = "#0B0F19";
-const SURFACE_LIGHT = "#FFFFFF";
+/** Cor do cartão, usada no anel que separa o marcador da linha. */
+const SURFACE = "#FFFFFF";
 
 const CHART_HEIGHT = 160;
 const PADDING_TOP = 16;
@@ -42,12 +39,7 @@ const PADDING_LEFT = 4;
 const money = (value: number) => `R$ ${value.toFixed(0)}`;
 
 function useChartTheme() {
-  const dark = useColorScheme() === "dark";
-  return {
-    series: dark ? SERIES_DARK : SERIES_LIGHT,
-    grid: dark ? GRID_DARK : GRID_LIGHT,
-    surface: dark ? SURFACE_DARK : SURFACE_LIGHT,
-  };
+  return { series: SERIES, grid: GRID, surface: SURFACE };
 }
 
 /** Topo "bonito" da escala, para a malha cair em números redondos. */
@@ -69,11 +61,11 @@ function ChartFrame({
   onLayout: (event: LayoutChangeEvent) => void;
 }) {
   return (
-    <View className="rounded-xl border border-card-border bg-card p-4">
+    <View className="rounded-card bg-surface p-5">
       {/* Série única: o título nomeia o dado, então não existe legenda. */}
-      <Text className="text-sm font-semibold text-foreground">{title}</Text>
+      <Text className="text-sm font-semibold text-ink">{title}</Text>
       {subtitle ? (
-        <Text className="mt-0.5 text-xs text-muted-foreground">{subtitle}</Text>
+        <Text className="mt-0.5 text-xs text-ink-muted">{subtitle}</Text>
       ) : null}
       <View className="mt-3" onLayout={onLayout}>
         {children}
@@ -85,7 +77,7 @@ function ChartFrame({
 function EmptyPlot() {
   return (
     <View className="items-center justify-center" style={{ height: CHART_HEIGHT }}>
-      <Text className="text-xs text-muted-foreground">Sem dados no período.</Text>
+      <Text className="text-xs text-ink-muted">Sem dados no período.</Text>
     </View>
   );
 }
@@ -98,7 +90,7 @@ function XLabels({ points, selected }: { points: ChartPoint[]; selected: number 
           key={`${point.label}-${index}`}
           numberOfLines={1}
           className={`flex-1 text-center text-[10px] ${
-            selected === index ? "font-semibold text-foreground" : "text-muted-foreground"
+            selected === index ? "font-semibold text-ink" : "text-ink-muted"
           }`}
         >
           {point.label}
@@ -202,7 +194,7 @@ export function BarChartCard({
           </View>
 
           <View className="mt-1 items-center">
-            <Text className="text-xs font-semibold text-foreground">
+            <Text className="text-xs font-semibold text-ink">
               {selected !== null
                 ? `${points[selected].label}: ${formatValue(points[selected].value)}`
                 : `Maior: ${points[maxIndex].label} · ${formatValue(points[maxIndex].value)}`}
@@ -328,7 +320,7 @@ export function AreaChartCard({
           </View>
 
           <View className="mt-1 items-center">
-            <Text className="text-xs font-semibold text-foreground">
+            <Text className="text-xs font-semibold text-ink">
               {selected !== null
                 ? `${points[selected].label}: ${formatValue(points[selected].value)}`
                 : `Pico: ${points[maxIndex].label} · ${formatValue(points[maxIndex].value)}`}

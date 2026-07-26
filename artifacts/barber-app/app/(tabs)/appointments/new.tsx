@@ -25,8 +25,11 @@ import {
   type Client,
 } from "@workspace/api-client-react";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Field, FormHeader, ChipOption, FormSection } from "@/components/form";
-import { Button, Card, Avatar } from "@/components/ui";
+import { Field, FormHeader, ChipOption, FormSection,
+  INK_MUTED,
+  INK,
+} from "@/components/form";
+import { Pill, Card, Avatar } from "@/components/ui";
 
 const parseMoney = (value: string): number => {
   const normalized = value.replace(/\s/g, "").replace(",", ".");
@@ -57,17 +60,17 @@ function ClientPicker({
         <View className="flex-row items-center gap-3">
           <Avatar name={selected.nome} />
           <View className="flex-1">
-            <Text className="text-base font-semibold text-foreground">
+            <Text className="text-base font-semibold text-ink">
               {selected.nome}
             </Text>
-            <Text className="text-xs text-muted-foreground">{selected.telefone}</Text>
+            <Text className="text-xs text-ink-muted">{selected.telefone}</Text>
           </View>
           <Pressable
             onPress={() => onSelect(null)}
             accessibilityRole="button"
             className="active:opacity-70"
           >
-            <Text className="text-xs font-medium text-primary">Trocar</Text>
+            <Text className="text-xs font-medium text-ink">Trocar</Text>
           </Pressable>
         </View>
       </Card>
@@ -76,20 +79,20 @@ function ClientPicker({
 
   return (
     <View className="gap-2">
-      <View className="flex-row items-center gap-2 rounded-lg border border-input bg-card px-3">
-        <Search size={16} color="#8A94A6" />
+      <View className="flex-row items-center gap-2 rounded-pill border border-hairline bg-surface px-3">
+        <Search size={16} color={INK_MUTED} />
         <TextInput
           value={search}
           onChangeText={setSearch}
           placeholder="Buscar cliente por nome ou telefone"
-          placeholderTextColor="#8A94A6"
-          className="h-11 flex-1 text-base text-foreground"
+          placeholderTextColor={INK_MUTED}
+          className="h-11 flex-1 text-base text-ink"
           autoCapitalize="none"
         />
       </View>
 
       {isLoading ? (
-        <ActivityIndicator color="#F59E0B" />
+        <ActivityIndicator color={INK} />
       ) : (
         (clients ?? []).slice(0, 6).map((client) => (
           <Pressable
@@ -102,10 +105,10 @@ function ClientPicker({
               <View className="flex-row items-center gap-3">
                 <Avatar name={client.nome} />
                 <View className="flex-1">
-                  <Text className="text-sm font-semibold text-foreground">
+                  <Text className="text-sm font-semibold text-ink">
                     {client.nome}
                   </Text>
-                  <Text className="text-xs text-muted-foreground">
+                  <Text className="text-xs text-ink-muted">
                     {client.telefone}
                   </Text>
                 </View>
@@ -116,7 +119,7 @@ function ClientPicker({
       )}
 
       {!isLoading && (clients ?? []).length === 0 ? (
-        <Text className="py-2 text-center text-xs text-muted-foreground">
+        <Text className="py-2 text-center text-xs text-ink-muted">
           Nenhum cliente encontrado.
         </Text>
       ) : null}
@@ -206,7 +209,7 @@ export default function NewAppointmentScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-background"
+      className="flex-1 bg-canvas"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <FormHeader title="Novo atendimento" />
@@ -221,7 +224,7 @@ export default function NewAppointmentScreen() {
       >
         <FormSection title="Cliente">
           <ClientPicker selected={resolvedClient} onSelect={setClient} />
-          {error ? <Text className="text-xs text-destructive">{error}</Text> : null}
+          {error ? <Text className="text-xs text-ink">{error}</Text> : null}
         </FormSection>
 
         {services && services.length > 0 ? (
@@ -281,8 +284,8 @@ export default function NewAppointmentScreen() {
 
         <Card>
           <View className="flex-row items-center justify-between">
-            <Text className="text-sm text-muted-foreground">Total</Text>
-            <Text className="text-2xl font-bold text-foreground">
+            <Text className="text-sm text-ink-muted">Total</Text>
+            <Text className="text-2xl font-bold text-ink">
               {formatMoney(valorFinal)}
             </Text>
           </View>
@@ -299,7 +302,9 @@ export default function NewAppointmentScreen() {
           editable={!createAppointment.isPending}
         />
 
-        <Button
+        <Pill
+          tone="ink"
+          full
           label="Registrar atendimento"
           onPress={handleSubmit}
           loading={createAppointment.isPending}

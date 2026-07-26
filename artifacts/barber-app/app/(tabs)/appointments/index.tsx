@@ -24,7 +24,11 @@ import {
   useListBarbers,
   type Appointment,
 } from "@workspace/api-client-react";
-import { Card, Avatar, EmptyState } from "@/components/ui";
+import { Card, Avatar, EmptyState,
+  INK_INVERSE,
+  INK_MUTED,
+  INK,
+} from "@/components/ui";
 
 const currency = (value: number) => `R$ ${value.toFixed(2).replace(".", ",")}`;
 
@@ -40,20 +44,20 @@ function AppointmentRow({ appointment }: { appointment: Appointment }) {
         <Avatar name={nome} />
 
         <View className="flex-1">
-          <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
+          <Text className="text-base font-semibold text-ink" numberOfLines={1}>
             {nome}
           </Text>
-          <Text className="text-xs text-muted-foreground">
+          <Text className="text-xs text-ink-muted">
             {appointment.servicoNome ?? "Atendimento"}
             {appointment.barbeiroNome ? ` · ${appointment.barbeiroNome}` : ""}
           </Text>
         </View>
 
         <View className="items-end">
-          <Text className="text-sm font-bold text-foreground">
+          <Text className="text-sm font-bold text-ink">
             {currency(appointment.valorFinal)}
           </Text>
-          <Text className="text-xs text-muted-foreground">
+          <Text className="text-xs text-ink-muted">
             {format(parseISO(appointment.data), "HH:mm")}
           </Text>
         </View>
@@ -97,30 +101,30 @@ export default function AppointmentsScreen() {
   const list = appointments ?? [];
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      <View className="gap-3 border-b border-border px-4 pb-3 pt-2">
+    <View className="flex-1 bg-canvas" style={{ paddingTop: insets.top }}>
+      <View className="gap-3 border-b border-hairline px-4 pb-3 pt-2">
         <View className="flex-row items-center justify-between">
-          <Text className="text-lg font-bold text-foreground">Atendimentos</Text>
+          <Text className="text-lg font-bold text-ink">Atendimentos</Text>
 
           <Pressable
             onPress={() => router.push("/appointments/new")}
             accessibilityRole="button"
             accessibilityLabel="Registrar atendimento"
-            className="h-9 flex-row items-center gap-1.5 rounded-lg bg-primary px-3 active:opacity-80"
+            className="h-9 flex-row items-center gap-1.5 rounded-pill bg-hero px-3 active:opacity-80"
           >
-            <Plus size={14} color="#0A0E1A" />
-            <Text className="text-xs font-semibold text-primary-foreground">Novo</Text>
+            <Plus size={14} color={INK_INVERSE} />
+            <Text className="text-xs font-semibold text-ink-inverse">Novo</Text>
           </Pressable>
         </View>
 
-        <View className="flex-row items-center justify-between rounded-lg border border-border bg-card px-2 py-1.5">
+        <View className="flex-row items-center justify-between rounded-pill border border-hairline bg-surface px-2 py-1.5">
           <Pressable
             onPress={() => setDate((current) => addDays(current, -1))}
             accessibilityRole="button"
             accessibilityLabel="Dia anterior"
-            className="h-9 w-9 items-center justify-center rounded-md active:opacity-70"
+            className="h-9 w-9 items-center justify-center rounded-pill active:opacity-70"
           >
-            <ChevronLeft size={20} color="#8A94A6" />
+            <ChevronLeft size={20} color={INK_MUTED} />
           </Pressable>
 
           <Pressable
@@ -129,11 +133,11 @@ export default function AppointmentsScreen() {
             accessibilityLabel="Ir para hoje"
             className="flex-1 items-center active:opacity-70"
           >
-            <Text className="text-sm font-semibold capitalize text-foreground">
+            <Text className="text-sm font-semibold capitalize text-ink">
               {format(date, "EEEE, d 'de' MMMM", { locale: ptBR })}
             </Text>
             {!isToday(date) ? (
-              <Text className="text-xs text-primary">toque para voltar a hoje</Text>
+              <Text className="text-xs text-ink">toque para voltar a hoje</Text>
             ) : null}
           </Pressable>
 
@@ -141,9 +145,9 @@ export default function AppointmentsScreen() {
             onPress={() => setDate((current) => addDays(current, 1))}
             accessibilityRole="button"
             accessibilityLabel="Próximo dia"
-            className="h-9 w-9 items-center justify-center rounded-md active:opacity-70"
+            className="h-9 w-9 items-center justify-center rounded-pill active:opacity-70"
           >
-            <ChevronRight size={20} color="#8A94A6" />
+            <ChevronRight size={20} color={INK_MUTED} />
           </Pressable>
         </View>
 
@@ -161,13 +165,13 @@ export default function AppointmentsScreen() {
                   onPress={() => setBarberId(barber.id as number | "all")}
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
-                  className={`rounded-full border px-3 py-1.5 active:opacity-70 ${
-                    selected ? "border-primary bg-primary" : "border-border bg-transparent"
+                  className={`rounded-pill border px-3 py-1.5 active:opacity-70 ${
+                    selected ? "border-primary bg-hero" : "border-hairline bg-transparent"
                   }`}
                 >
                   <Text
                     className={`text-xs font-medium ${
-                      selected ? "text-primary-foreground" : "text-muted-foreground"
+                      selected ? "text-ink-inverse" : "text-ink-muted"
                     }`}
                   >
                     {barber.nome}
@@ -181,15 +185,15 @@ export default function AppointmentsScreen() {
 
       {isLoading ? (
         <View className="items-center py-12">
-          <ActivityIndicator size="large" color="#F59E0B" />
+          <ActivityIndicator size="large" color={INK} />
         </View>
       ) : isError ? (
         <View className="p-4">
           <Card>
-            <Text className="text-sm font-medium text-destructive">
+            <Text className="text-sm font-medium text-ink">
               Não foi possível carregar os atendimentos.
             </Text>
-            <Text className="mt-1 text-xs text-muted-foreground">
+            <Text className="mt-1 text-xs text-ink-muted">
               {error instanceof Error ? error.message : "Erro desconhecido."}
             </Text>
           </Card>
@@ -207,7 +211,7 @@ export default function AppointmentsScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor="#F59E0B"
+              tintColor={INK}
             />
           }
           ListHeaderComponent={
@@ -215,16 +219,16 @@ export default function AppointmentsScreen() {
               <Card className="mb-3">
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center gap-2">
-                    <Banknote size={16} color="#10B981" />
-                    <Text className="text-xs font-medium text-primary">
+                    <Banknote size={16} color={INK} />
+                    <Text className="text-xs font-medium text-ink">
                       Faturamento do Dia
                     </Text>
                   </View>
-                  <Text className="text-xs text-muted-foreground">
+                  <Text className="text-xs text-ink-muted">
                     {list.length} {list.length === 1 ? "atendimento" : "atendimentos"}
                   </Text>
                 </View>
-                <Text className="mt-1 text-2xl font-bold text-foreground">
+                <Text className="mt-1 text-2xl font-bold text-ink">
                   {currency(faturamento)}
                 </Text>
               </Card>

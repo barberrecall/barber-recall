@@ -34,7 +34,10 @@ import {
   type Campaign,
 } from "@workspace/api-client-react";
 import { CAMPAIGN_TIPO_LABEL, describeCampaignTrigger } from "@/lib/campaign-labels";
-import { Card, Avatar, EmptyState, Badge } from "@/components/ui";
+import { Card, Avatar, EmptyState, Badge,
+  INK_INVERSE,
+  INK,
+} from "@/components/ui";
 
 /**
  * Disparo pendente.
@@ -66,10 +69,10 @@ function PendingRow({
         <Avatar name={nome} />
 
         <View className="flex-1">
-          <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
+          <Text className="text-base font-semibold text-ink" numberOfLines={1}>
             {nome}
           </Text>
-          <Text className="text-xs text-muted-foreground">
+          <Text className="text-xs text-ink-muted">
             {notification.campaignNome ?? "Campanha"}
             {notification.diasSemVisita != null
               ? ` · ${notification.diasSemVisita} dias sem visitar`
@@ -80,15 +83,15 @@ function PendingRow({
         {enviado ? (
           <View className="items-end">
             <View className="flex-row items-center gap-1">
-              <CheckCircle2 size={16} color="#10B981" />
-              <Text className="text-xs font-medium" style={{ color: "#10B981" }}>
+              <CheckCircle2 size={16} color={INK} />
+              <Text className="text-xs font-medium" style={{ color: INK }}>
                 Enviado
               </Text>
             </View>
             {/* Autoria só aparece quando existe: disparos anteriores à coluna
                 `sent_by` não têm, e mostrar "por —" seria ruído. */}
             {notification.sentByNome ? (
-              <Text className="mt-0.5 text-xs text-muted-foreground">
+              <Text className="mt-0.5 text-xs text-ink-muted">
                 por {notification.sentByNome}
               </Text>
             ) : null}
@@ -99,12 +102,12 @@ function PendingRow({
             disabled={sending || !notification.waLink}
             accessibilityRole="button"
             accessibilityLabel={`Enviar mensagem para ${nome}`}
-            className={`h-9 flex-row items-center gap-1.5 rounded-lg bg-primary px-3 active:opacity-80 ${
+            className={`h-9 flex-row items-center gap-1.5 rounded-pill bg-hero px-3 active:opacity-80 ${
               sending || !notification.waLink ? "opacity-50" : ""
             }`}
           >
-            <Send size={14} color="#0A0E1A" />
-            <Text className="text-xs font-semibold text-primary-foreground">
+            <Send size={14} color={INK_INVERSE} />
+            <Text className="text-xs font-semibold text-ink-inverse">
               Enviar
             </Text>
           </Pressable>
@@ -112,7 +115,7 @@ function PendingRow({
       </View>
 
       {notification.mensagemResolvida ? (
-        <Text className="mt-2 text-xs text-muted-foreground" numberOfLines={2}>
+        <Text className="mt-2 text-xs text-ink-muted" numberOfLines={2}>
           {notification.mensagemResolvida}
         </Text>
       ) : null}
@@ -140,27 +143,27 @@ function CampaignRow({
           accessibilityLabel={`Editar ${campaign.nome}`}
           className="flex-1 active:opacity-70"
         >
-          <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
+          <Text className="text-base font-semibold text-ink" numberOfLines={1}>
             {campaign.nome}
           </Text>
-          <Text className="text-xs text-muted-foreground">
+          <Text className="text-xs text-ink-muted">
             {describeCampaignTrigger(campaign.tipo, campaign.dias)}
           </Text>
           <View className="mt-1.5 flex-row items-center gap-2">
-            <Badge label={CAMPAIGN_TIPO_LABEL[campaign.tipo]} color="#6366F1" />
+            <Badge label={CAMPAIGN_TIPO_LABEL[campaign.tipo]} />
             {campaign.cupomCodigo ? (
-              <Badge label={campaign.cupomCodigo} color="#F97316" />
+              <Badge label={campaign.cupomCodigo} />
             ) : null}
           </View>
         </Pressable>
 
-        <Pencil size={14} color="#8A94A6" />
+        <Pencil size={14} />
 
         <Switch
           value={campaign.ativo}
           onValueChange={() => onToggle(campaign)}
           disabled={toggling}
-          trackColor={{ false: "#3A4356", true: "#F59E0B" }}
+          trackColor={{ false: "#E6E6EA", true: INK }}
           thumbColor="#FFFFFF"
         />
       </View>
@@ -256,25 +259,25 @@ export default function CampaignsScreen() {
   const enviadosHoje = (notifications ?? []).filter((n) => n.status === "sent");
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      <View className="flex-row items-center justify-between border-b border-border px-4 pb-3 pt-2">
-        <Text className="text-lg font-bold text-foreground">Campanhas</Text>
+    <View className="flex-1 bg-canvas" style={{ paddingTop: insets.top }}>
+      <View className="flex-row items-center justify-between border-b border-hairline px-4 pb-3 pt-2">
+        <Text className="text-lg font-bold text-ink">Campanhas</Text>
 
         <Pressable
           onPress={handleGenerate}
           disabled={generate.isPending}
           accessibilityRole="button"
           accessibilityLabel="Atualizar disparos de hoje"
-          className={`h-9 flex-row items-center gap-1.5 rounded-lg border border-border px-3 active:opacity-70 ${
+          className={`h-9 flex-row items-center gap-1.5 rounded-pill border border-hairline px-3 active:opacity-70 ${
             generate.isPending ? "opacity-50" : ""
           }`}
         >
           {generate.isPending ? (
-            <ActivityIndicator size="small" color="#F59E0B" />
+            <ActivityIndicator size="small" color={INK} />
           ) : (
-            <RefreshCw size={14} color="#8A94A6" />
+            <RefreshCw size={14} />
           )}
-          <Text className="text-xs font-medium text-foreground">Atualizar</Text>
+          <Text className="text-xs font-medium text-ink">Atualizar</Text>
         </Pressable>
       </View>
 
@@ -287,22 +290,22 @@ export default function CampaignsScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetchNotifications}
-            tintColor="#F59E0B"
+            tintColor={INK}
           />
         }
       >
         <View className="mb-2 flex-row items-center gap-2">
-          <Clock size={16} color="#F59E0B" />
-          <Text className="text-base font-semibold text-foreground">
+          <Clock size={16} color={INK} />
+          <Text className="text-base font-semibold text-ink">
             Disparos de hoje
           </Text>
           {pendentes.length > 0 ? (
-            <Badge label={String(pendentes.length)} color="#F59E0B" />
+            <Badge label={String(pendentes.length)} strong />
           ) : null}
         </View>
 
         {loadingNotifications ? (
-          <ActivityIndicator color="#F59E0B" />
+          <ActivityIndicator color={INK} />
         ) : pendentes.length > 0 ? (
           pendentes.map((notification) => (
             <PendingRow
@@ -322,7 +325,7 @@ export default function CampaignsScreen() {
 
         {enviadosHoje.length > 0 ? (
           <>
-            <Text className="mb-2 mt-4 text-base font-semibold text-foreground">
+            <Text className="mb-2 mt-4 text-base font-semibold text-ink">
               Já enviados
             </Text>
             {enviadosHoje.map((notification) => (
@@ -337,7 +340,7 @@ export default function CampaignsScreen() {
         ) : null}
 
         <View className="mb-2 mt-6 flex-row items-center justify-between">
-          <Text className="text-base font-semibold text-foreground">
+          <Text className="text-base font-semibold text-ink">
             Campanhas configuradas
           </Text>
 
@@ -345,15 +348,15 @@ export default function CampaignsScreen() {
             onPress={() => router.push("/campaigns/edit")}
             accessibilityRole="button"
             accessibilityLabel="Nova campanha"
-            className="h-9 flex-row items-center gap-1.5 rounded-lg bg-primary px-3 active:opacity-80"
+            className="h-9 flex-row items-center gap-1.5 rounded-pill bg-hero px-3 active:opacity-80"
           >
-            <Plus size={14} color="#0A0E1A" />
-            <Text className="text-xs font-semibold text-primary-foreground">Nova</Text>
+            <Plus size={14} color={INK_INVERSE} />
+            <Text className="text-xs font-semibold text-ink-inverse">Nova</Text>
           </Pressable>
         </View>
 
         {loadingCampaigns ? (
-          <ActivityIndicator color="#F59E0B" />
+          <ActivityIndicator color={INK} />
         ) : campaigns && campaigns.length > 0 ? (
           campaigns.map((campaign) => (
             <CampaignRow
