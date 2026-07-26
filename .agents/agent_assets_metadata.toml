@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "fJEpixQLX_GEJmSS4NaCJ"
+uri = "file://barber-recall.zip"
+type = "unspecified"
+title = "barber-recall.zip"

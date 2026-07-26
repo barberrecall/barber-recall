@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Barber Recall",
+    "slug": "barber-recall",
+    "scheme": "barberrecall",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0A0E1A",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.barberrecall.app"
+    },
+    "android": {
+      "package": "com.barberrecall.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0E1A"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

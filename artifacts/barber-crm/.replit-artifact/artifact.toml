@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Barber Recall CRM"
+version = "1.0.0"
+id = "artifacts/barber-crm"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20505
+
+[services.development]
+run = "pnpm --filter @workspace/barber-crm run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/barber-crm", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/barber-crm/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20505"
+BASE_PATH = "/"

@@ -1,0 +1,1343 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Barber Recall CRM API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: clients
+    description: Client management
+  - name: appointments
+    description: Appointment management
+  - name: barbers
+    description: Barber management
+  - name: services
+    description: Service management
+  - name: campaigns
+    description: Campaign management
+  - name: coupons
+    description: Coupon management
+  - name: dashboard
+    description: Dashboard statistics
+  - name: reports
+    description: Analytics and reports
+  - name: insights
+    description: AI insights
+  - name: barbershop
+    description: Barbershop settings
+  - name: notifications
+    description: Notification tracking
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Barbershop ─────────────────────────────────────────────────────────────
+  /barbershop:
+    get:
+      operationId: getBarbershop
+      tags: [barbershop]
+      summary: Get barbershop settings
+      responses:
+        "200":
+          description: Barbershop data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Barbershop"
+    patch:
+      operationId: updateBarbershop
+      tags: [barbershop]
+      summary: Update barbershop settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BarbershopInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Barbershop"
+
+  # ─── Clients ─────────────────────────────────────────────────────────────────
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: List all clients
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, awaiting_return, at_risk]
+        - name: barberId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Client list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Client"
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Create a client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+  /clients/{id}:
+    get:
+      operationId: getClient
+      tags: [clients]
+      summary: Get a client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+    patch:
+      operationId: updateClient
+      tags: [clients]
+      summary: Update a client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+    delete:
+      operationId: deleteClient
+      tags: [clients]
+      summary: Delete a client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /clients/{id}/appointments:
+    get:
+      operationId: getClientAppointments
+      tags: [clients]
+      summary: Get appointment history for a client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appointment"
+
+  # ─── Appointments ────────────────────────────────────────────────────────────
+  /appointments:
+    get:
+      operationId: listAppointments
+      tags: [appointments]
+      summary: List appointments
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: barberId
+          in: query
+          schema:
+            type: integer
+        - name: clientId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Appointment list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appointment"
+    post:
+      operationId: createAppointment
+      tags: [appointments]
+      summary: Create an appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+
+  /appointments/{id}:
+    get:
+      operationId: getAppointment
+      tags: [appointments]
+      summary: Get an appointment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+    patch:
+      operationId: updateAppointment
+      tags: [appointments]
+      summary: Update an appointment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+    delete:
+      operationId: deleteAppointment
+      tags: [appointments]
+      summary: Delete an appointment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Barbers ─────────────────────────────────────────────────────────────────
+  /barbers:
+    get:
+      operationId: listBarbers
+      tags: [barbers]
+      summary: List all barbers
+      responses:
+        "200":
+          description: Barber list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Barber"
+    post:
+      operationId: createBarber
+      tags: [barbers]
+      summary: Create a barber
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BarberInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Barber"
+
+  /barbers/{id}:
+    patch:
+      operationId: updateBarber
+      tags: [barbers]
+      summary: Update a barber
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BarberUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Barber"
+    delete:
+      operationId: deleteBarber
+      tags: [barbers]
+      summary: Delete a barber
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Services ────────────────────────────────────────────────────────────────
+  /services:
+    get:
+      operationId: listServices
+      tags: [services]
+      summary: List all services
+      responses:
+        "200":
+          description: Service list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Service"
+    post:
+      operationId: createService
+      tags: [services]
+      summary: Create a service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+
+  /services/{id}:
+    patch:
+      operationId: updateService
+      tags: [services]
+      summary: Update a service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+    delete:
+      operationId: deleteService
+      tags: [services]
+      summary: Delete a service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Campaigns ───────────────────────────────────────────────────────────────
+  /campaigns:
+    get:
+      operationId: listCampaigns
+      tags: [campaigns]
+      summary: List all campaigns
+      responses:
+        "200":
+          description: Campaign list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Campaign"
+    post:
+      operationId: createCampaign
+      tags: [campaigns]
+      summary: Create a campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+
+  /campaigns/{id}:
+    patch:
+      operationId: updateCampaign
+      tags: [campaigns]
+      summary: Update a campaign
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+    delete:
+      operationId: deleteCampaign
+      tags: [campaigns]
+      summary: Delete a campaign
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /campaigns/{id}/toggle:
+    post:
+      operationId: toggleCampaign
+      tags: [campaigns]
+      summary: Toggle campaign active state
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+
+  # ─── Coupons ─────────────────────────────────────────────────────────────────
+  /coupons:
+    get:
+      operationId: listCoupons
+      tags: [coupons]
+      summary: List all coupons
+      responses:
+        "200":
+          description: Coupon list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Coupon"
+    post:
+      operationId: createCoupon
+      tags: [coupons]
+      summary: Create a coupon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CouponInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+
+  /coupons/{id}:
+    patch:
+      operationId: updateCoupon
+      tags: [coupons]
+      summary: Update a coupon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CouponUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+    delete:
+      operationId: deleteCoupon
+      tags: [coupons]
+      summary: Delete a coupon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Dashboard ───────────────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard KPI cards
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/charts:
+    get:
+      operationId: getDashboardCharts
+      tags: [dashboard]
+      summary: Get dashboard chart data (clients by day, monthly return, revenue)
+      responses:
+        "200":
+          description: Chart data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardCharts"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent appointments and client activity
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  # ─── Reports ─────────────────────────────────────────────────────────────────
+  /reports/overview:
+    get:
+      operationId: getReportsOverview
+      tags: [reports]
+      summary: Get aggregated report metrics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: month
+      responses:
+        "200":
+          description: Report overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportOverview"
+
+  /reports/revenue:
+    get:
+      operationId: getRevenueReport
+      tags: [reports]
+      summary: Daily and monthly revenue series
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, year]
+            default: month
+      responses:
+        "200":
+          description: Revenue data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RevenueDataPoint"
+
+  /reports/clients:
+    get:
+      operationId: getClientReport
+      tags: [reports]
+      summary: New vs returning clients over time
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, year]
+            default: month
+      responses:
+        "200":
+          description: Client data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClientDataPoint"
+
+  # ─── AI Insights ─────────────────────────────────────────────────────────────
+  /insights:
+    get:
+      operationId: getInsights
+      tags: [insights]
+      summary: Get AI-generated business insights
+      responses:
+        "200":
+          description: Insights
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsightsResult"
+
+  # ─── Notifications ───────────────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List scheduled notifications
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, sent, failed]
+      responses:
+        "200":
+          description: Notification list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    # ─── Barbershop ─────────────────────────────────────────────────
+    Barbershop:
+      type: object
+      required: [id, nome, telefone, email, cidade, corPrimaria, createdAt]
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        telefone:
+          type: string
+        email:
+          type: string
+        cidade:
+          type: string
+        logo:
+          type: ["string", "null"]
+        corPrimaria:
+          type: string
+        corSecundaria:
+          type: ["string", "null"]
+        whatsapp:
+          type: ["string", "null"]
+        instagram:
+          type: ["string", "null"]
+        mensagemPadrao:
+          type: ["string", "null"]
+        diasRetorno:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    BarbershopInput:
+      type: object
+      properties:
+        nome:
+          type: string
+        telefone:
+          type: string
+        email:
+          type: string
+        cidade:
+          type: string
+        logo:
+          type: string
+        corPrimaria:
+          type: string
+        corSecundaria:
+          type: string
+        whatsapp:
+          type: string
+        instagram:
+          type: string
+        mensagemPadrao:
+          type: string
+        diasRetorno:
+          type: integer
+
+    # ─── Client ─────────────────────────────────────────────────────
+    Client:
+      type: object
+      required: [id, nome, telefone, status, ativo, totalVisitas, createdAt]
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        telefone:
+          type: string
+        email:
+          type: ["string", "null"]
+        dataNascimento:
+          type: ["string", "null"]
+          format: date
+        observacoes:
+          type: ["string", "null"]
+        # Derivado do histórico de atendimentos (skill client-recall-logic):
+        # Ativo / Aguardando Retorno / Em Risco. Somente leitura.
+        status:
+          type: string
+          enum: [active, awaiting_return, at_risk]
+        ativo:
+          type: boolean
+        totalVisitas:
+          type: integer
+        ultimoAtendimento:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    ClientInput:
+      type: object
+      required: [nome, telefone]
+      properties:
+        nome:
+          type: string
+        telefone:
+          type: string
+        email:
+          type: string
+        dataNascimento:
+          type: string
+          format: date
+        observacoes:
+          type: string
+
+    ClientUpdate:
+      type: object
+      properties:
+        nome:
+          type: string
+        telefone:
+          type: string
+        email:
+          type: string
+        dataNascimento:
+          type: string
+          format: date
+        observacoes:
+          type: string
+        ativo:
+          type: boolean
+
+    # ─── Barber ─────────────────────────────────────────────────────
+    Barber:
+      type: object
+      required: [id, nome, ativo, createdAt]
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        telefone:
+          type: ["string", "null"]
+        ativo:
+          type: boolean
+        foto:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    BarberInput:
+      type: object
+      required: [nome]
+      properties:
+        nome:
+          type: string
+        telefone:
+          type: string
+        foto:
+          type: string
+
+    BarberUpdate:
+      type: object
+      properties:
+        nome:
+          type: string
+        telefone:
+          type: string
+        ativo:
+          type: boolean
+        foto:
+          type: string
+
+    # ─── Service ────────────────────────────────────────────────────
+    Service:
+      type: object
+      required: [id, nome, valor, duracao, ativo]
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        valor:
+          type: number
+        duracao:
+          type: integer
+        ativo:
+          type: boolean
+
+    ServiceInput:
+      type: object
+      required: [nome, valor, duracao]
+      properties:
+        nome:
+          type: string
+        valor:
+          type: number
+        duracao:
+          type: integer
+
+    ServiceUpdate:
+      type: object
+      properties:
+        nome:
+          type: string
+        valor:
+          type: number
+        duracao:
+          type: integer
+        ativo:
+          type: boolean
+
+    # ─── Appointment ────────────────────────────────────────────────
+    Appointment:
+      type: object
+      required: [id, clienteId, valor, valorFinal, data, createdAt]
+      properties:
+        id:
+          type: integer
+        clienteId:
+          type: integer
+        clienteNome:
+          type: ["string", "null"]
+        barbeiroId:
+          type: ["integer", "null"]
+        barbeiroNome:
+          type: ["string", "null"]
+        servicoId:
+          type: ["integer", "null"]
+        servicoNome:
+          type: ["string", "null"]
+        valor:
+          type: number
+        desconto:
+          type: number
+        valorFinal:
+          type: number
+        data:
+          type: string
+          format: date-time
+        observacoes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AppointmentInput:
+      type: object
+      required: [clienteId, valor, valorFinal, data]
+      properties:
+        clienteId:
+          type: integer
+        barbeiroId:
+          type: integer
+        servicoId:
+          type: integer
+        valor:
+          type: number
+        desconto:
+          type: number
+        valorFinal:
+          type: number
+        data:
+          type: string
+          format: date-time
+        observacoes:
+          type: string
+        couponCode:
+          type: string
+
+    AppointmentUpdate:
+      type: object
+      properties:
+        barbeiroId:
+          type: integer
+        servicoId:
+          type: integer
+        valor:
+          type: number
+        desconto:
+          type: number
+        valorFinal:
+          type: number
+        data:
+          type: string
+          format: date-time
+        observacoes:
+          type: string
+
+    # ─── Campaign ───────────────────────────────────────────────────
+    Campaign:
+      type: object
+      required: [id, nome, tipo, dias, mensagem, ativo, createdAt]
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        tipo:
+          type: string
+          enum: [return, birthday, loyalty, custom]
+        dias:
+          type: integer
+        mensagem:
+          type: string
+        cupomId:
+          type: ["integer", "null"]
+        cupomCodigo:
+          type: ["string", "null"]
+        ativo:
+          type: boolean
+        notificacoesEnviadas:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    CampaignInput:
+      type: object
+      required: [nome, tipo, dias, mensagem]
+      properties:
+        nome:
+          type: string
+        tipo:
+          type: string
+          enum: [return, birthday, loyalty, custom]
+        dias:
+          type: integer
+        mensagem:
+          type: string
+        cupomId:
+          type: integer
+
+    CampaignUpdate:
+      type: object
+      properties:
+        nome:
+          type: string
+        tipo:
+          type: string
+          enum: [return, birthday, loyalty, custom]
+        dias:
+          type: integer
+        mensagem:
+          type: string
+        cupomId:
+          type: integer
+        ativo:
+          type: boolean
+
+    # ─── Coupon ─────────────────────────────────────────────────────
+    Coupon:
+      type: object
+      required: [id, codigo, tipo, valor, ativo, usoAtual]
+      properties:
+        id:
+          type: integer
+        codigo:
+          type: string
+        tipo:
+          type: string
+          enum: [percent, fixed]
+        valor:
+          type: number
+        validade:
+          type: ["string", "null"]
+          format: date
+        ativo:
+          type: boolean
+        usoMaximo:
+          type: ["integer", "null"]
+        usoAtual:
+          type: integer
+
+    CouponInput:
+      type: object
+      required: [tipo, valor]
+      properties:
+        codigo:
+          type: string
+        tipo:
+          type: string
+          enum: [percent, fixed]
+        valor:
+          type: number
+        validade:
+          type: string
+          format: date
+        usoMaximo:
+          type: integer
+
+    CouponUpdate:
+      type: object
+      properties:
+        codigo:
+          type: string
+        tipo:
+          type: string
+          enum: [percent, fixed]
+        valor:
+          type: number
+        validade:
+          type: string
+          format: date
+        ativo:
+          type: boolean
+        usoMaximo:
+          type: integer
+
+    # ─── Dashboard ──────────────────────────────────────────────────
+    DashboardStats:
+      type: object
+      required: [clientesAtivos, clientesNovosHoje, clientesAguardandoRetorno, clientesEmRisco, atendimentosHoje, faturamentoHoje, cuponsUtilizados, taxaRetorno]
+      properties:
+        # Contagens por status de recall derivado (active / awaiting_return / at_risk).
+        clientesAtivos:
+          type: integer
+        # Cadastrados hoje — é `createdAt`, não um status de recall.
+        clientesNovosHoje:
+          type: integer
+        clientesAguardandoRetorno:
+          type: integer
+        clientesEmRisco:
+          type: integer
+        atendimentosHoje:
+          type: integer
+        faturamentoHoje:
+          type: number
+        cuponsUtilizados:
+          type: integer
+        # % de retornos dentro do prazo sobre as janelas de retorno já
+        # encerradas (quem ainda está no prazo fica fora do denominador).
+        taxaRetorno:
+          type: number
+
+    DashboardCharts:
+      type: object
+      required: [clientesPorDia, retornoMensal, receita]
+      properties:
+        clientesPorDia:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartPoint"
+        retornoMensal:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartPoint"
+        receita:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartPoint"
+
+    ChartPoint:
+      type: object
+      required: [label, value]
+      properties:
+        label:
+          type: string
+        value:
+          type: number
+
+    ActivityItem:
+      type: object
+      required: [id, tipo, descricao, data]
+      properties:
+        id:
+          type: integer
+        tipo:
+          type: string
+          enum: [appointment, new_client, campaign_sent]
+        descricao:
+          type: string
+        data:
+          type: string
+          format: date-time
+        clienteNome:
+          type: ["string", "null"]
+        valor:
+          type: ["number", "null"]
+
+    # ─── Reports ────────────────────────────────────────────────────
+    ReportOverview:
+      type: object
+      required: [receitaDiaria, receitaMensal, clientesNovos, clientesRecorrentes, tempoMedioRetorno, ticketMedio, cuponsUsados, campanhasEnviadas, taxaAbertura, taxaRetorno]
+      properties:
+        receitaDiaria:
+          type: number
+        receitaMensal:
+          type: number
+        clientesNovos:
+          type: integer
+        clientesRecorrentes:
+          type: integer
+        tempoMedioRetorno:
+          type: number
+        ticketMedio:
+          type: number
+        cuponsUsados:
+          type: integer
+        campanhasEnviadas:
+          type: integer
+        taxaAbertura:
+          type: number
+        taxaRetorno:
+          type: number
+
+    RevenueDataPoint:
+      type: object
+      required: [date, revenue, appointments]
+      properties:
+        date:
+          type: string
+        revenue:
+          type: number
+        appointments:
+          type: integer
+
+    ClientDataPoint:
+      type: object
+      required: [date, novos, recorrentes]
+      properties:
+        date:
+          type: string
+        novos:
+          type: integer
+        recorrentes:
+          type: integer
+
+    # ─── Insights ───────────────────────────────────────────────────
+    InsightsResult:
+      type: object
+      required: [insights, potentialRevenue, clientesEmRisco, melhorDiaCampanha, melhorHorario]
+      properties:
+        insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/Insight"
+        potentialRevenue:
+          type: number
+        clientesEmRisco:
+          type: integer
+        melhorDiaCampanha:
+          type: string
+        melhorHorario:
+          type: string
+
+    Insight:
+      type: object
+      required: [id, tipo, mensagem, impacto]
+      properties:
+        id:
+          type: integer
+        tipo:
+          type: string
+          enum: [warning, opportunity, success, info]
+        mensagem:
+          type: string
+        impacto:
+          type: ["number", "null"]
+
+    # ─── Notification ───────────────────────────────────────────────
+    Notification:
+      type: object
+      required: [id, clientId, campaignId, status, scheduledAt]
+      properties:
+        id:
+          type: integer
+        clientId:
+          type: integer
+        clienteNome:
+          type: ["string", "null"]
+        campaignId:
+          type: integer
+        campaignNome:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, sent, failed]
+        scheduledAt:
+          type: string
+          format: date-time
+        sentAt:
+          type: ["string", "null"]
+          format: date-time
+        opened:
+          type: boolean
+        clicked:
+          type: boolean

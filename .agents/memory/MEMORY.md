@@ -1,0 +1,5 @@
+- [Auth System](auth-system.md) — real session auth (bcrypt + express-session + connect-pg-simple); every data query must filter by barbershopId from session; cross-tenant FK refs validated before insert.
+- [Barber CRM architecture](barber-crm-arch.md) — multi-tenant: each user owns one barbershop; all tables have barbershop_id FK; no more getOrCreateShop() — use req.session.barbershopId.
+- [Drizzle lib rebuild rule](drizzle-lib-rebuild.md) — always run `pnpm run typecheck:libs` after changing lib/db or lib/api-spec before checking api-server typecheck, or all table imports will appear missing.
+- [Wouter hash anchor fix](wouter-hash-anchor.md) — wouter Link intercepts all clicks including hash hrefs; use native button + scrollIntoView for in-page anchors, not Link href="#section".
+- [Radix Select "none" value bug](radix-select-none-value.md) — SelectItem value="none" is truthy, so parseInt("none")=NaN silently corrupts API payloads; always check value !== "none" before parsing.

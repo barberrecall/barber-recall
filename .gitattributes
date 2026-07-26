@@ -1,0 +1,14 @@
+# The repo stores LF regardless of platform. This project is edited on Windows
+# but also runs on Replit (Linux), and a shell script checked out with CRLF
+# fails there with a confusing "bad interpreter" error.
+* text=auto eol=lf
+
+# Never touch line endings in binaries.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.node binary

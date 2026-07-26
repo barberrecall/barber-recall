@@ -1,0 +1,762 @@
+⸻
+
+Sistema
+
+Barber Recall CRM
+
+Objetivo
+
+Criar um Micro-SaaS para barbearias focado em retenção de clientes através de automações inteligentes via WhatsApp.
+
+O sistema NÃO deve ser um ERP completo.
+
+O foco principal é aumentar o retorno dos clientes.
+
+Interface extremamente simples.
+
+Design moderno.
+
+Mobile First.
+
+Tema Dark e Light.
+
+⸻
+
+Stack
+
+Frontend
+
+React + Next.js
+
+TailwindCSS
+
+Shadcn UI
+
+Lucide Icons
+
+Framer Motion
+
+Backend
+
+Supabase
+
+Supabase Auth
+
+Supabase Database
+
+Supabase Storage
+
+Supabase Edge Functions
+
+Automação
+
+N8N
+
+API
+
+REST
+
+Hospedagem
+
+Vercel
+
+⸻
+
+Layout
+
+Sidebar esquerda
+
+Logo
+
+Dashboard
+
+Clientes
+
+Atendimentos
+
+Campanhas
+
+Cupons
+
+Relatórios
+
+Configurações
+
+Perfil
+
+Botão Logout
+
+⸻
+
+Dashboard
+
+Cards
+
+Clientes ativos
+
+Clientes novos hoje
+
+Clientes aguardando retorno
+
+Clientes perdidos
+
+Atendimentos hoje
+
+Faturamento hoje
+
+Cupom utilizados
+
+Taxa de retorno
+
+Gráficos
+
+Clientes por dia
+
+Retorno mensal
+
+Receita
+
+⸻
+
+Banco de Dados
+
+barbershop
+
+id
+
+nome
+
+telefone
+
+email
+
+cidade
+
+logo
+
+cor_primaria
+
+created_at
+
+⸻
+
+users
+
+id
+
+auth_id
+
+barbershop_id
+
+nome
+
+email
+
+telefone
+
+cargo
+
+created_at
+
+⸻
+
+barbers
+
+id
+
+barbershop_id
+
+nome
+
+telefone
+
+ativo
+
+foto
+
+created_at
+
+⸻
+
+clients
+
+id
+
+barbershop_id
+
+nome
+
+telefone
+
+email
+
+data_nascimento
+
+observacoes
+
+created_at
+
+ultimo_atendimento
+
+total_visitas
+
+status
+
+ativo
+
+⸻
+
+services
+
+id
+
+barbershop_id
+
+nome
+
+valor
+
+duracao
+
+ativo
+
+⸻
+
+appointments
+
+id
+
+cliente_id
+
+barbeiro_id
+
+servico_id
+
+valor
+
+desconto
+
+valor_final
+
+data
+
+observacoes
+
+created_at
+
+⸻
+
+coupons
+
+id
+
+barbershop_id
+
+codigo
+
+tipo
+
+valor
+
+validade
+
+ativo
+
+uso_maximo
+
+⸻
+
+coupon_usage
+
+id
+
+coupon_id
+
+client_id
+
+appointment_id
+
+used_at
+
+⸻
+
+campaigns
+
+id
+
+barbershop_id
+
+nome
+
+tipo
+
+dias
+
+mensagem
+
+cupom
+
+ativo
+
+created_at
+
+⸻
+
+notifications
+
+id
+
+client_id
+
+campaign_id
+
+status
+
+scheduled_at
+
+sent_at
+
+opened
+
+clicked
+
+⸻
+
+Fluxo
+
+Novo cliente
+
+↓
+
+Cadastrar
+
+↓
+
+Registrar atendimento
+
+↓
+
+Atualizar último atendimento
+
+↓
+
+Criar lembrete automático
+
+↓
+
+Esperar X dias
+
+↓
+
+Enviar WhatsApp
+
+↓
+
+Cliente retorna
+
+↓
+
+Registrar novo atendimento
+
+↓
+
+Reiniciar ciclo
+
+⸻
+
+Cadastro Cliente
+
+Campos
+
+Nome
+
+Telefone
+
+Email
+
+Nascimento
+
+Observações
+
+Salvar
+
+⸻
+
+Atendimento
+
+Selecionar cliente
+
+Selecionar barbeiro
+
+Selecionar serviço
+
+Valor
+
+Desconto
+
+Valor final
+
+Observações
+
+Finalizar
+
+Ao finalizar
+
+Atualizar
+
+Último atendimento
+
+Total visitas
+
+Criar automações
+
+⸻
+
+Campanhas
+
+Modelo 15 dias
+
+Mensagem
+
+Olá {{nome}}
+
+Já faz 15 dias desde seu último corte.
+
+Estamos esperando você.
+
+Apresente este cupom:
+
+{{cupom}}
+
+Botão
+
+Agendar pelo WhatsApp
+
+⸻
+
+Modelo 30 dias
+
+Olá {{nome}}
+
+Sentimos sua falta.
+
+Volte essa semana e ganhe um desconto exclusivo.
+
+⸻
+
+Modelo Aniversário
+
+Parabéns {{nome}}
+
+Você ganhou um presente da nossa barbearia.
+
+⸻
+
+Modelo Fidelidade
+
+Parabéns!
+
+Você completou 5 cortes.
+
+Seu próximo corte possui 50% OFF.
+
+⸻
+
+Cupons
+
+Criar cupom
+
+Valor percentual
+
+Valor fixo
+
+Validade
+
+Quantidade máxima
+
+Código automático
+
+Exemplo
+
+BARBER10
+
+VOLTA15
+
+VIP50
+
+⸻
+
+IA
+
+Adicionar módulo IA.
+
+Ela deve analisar
+
+Clientes que não voltam
+
+Clientes frequentes
+
+Tempo médio entre cortes
+
+Melhor dia para campanhas
+
+Melhor horário
+
+Clientes com maior ticket
+
+Clientes perdidos
+
+Criar Insights
+
+Exemplo
+
+“42 clientes estão há mais de 25 dias sem cortar o cabelo.”
+
+“Você pode recuperar aproximadamente R$2.850 enviando uma campanha hoje.”
+
+⸻
+
+Relatórios
+
+Receita diária
+
+Receita mensal
+
+Clientes novos
+
+Clientes recorrentes
+
+Tempo médio de retorno
+
+Ticket médio
+
+Quantidade de cupons usados
+
+Campanhas enviadas
+
+Taxa de abertura
+
+Taxa de retorno
+
+⸻
+
+Configurações
+
+Nome da barbearia
+
+Telefone
+
+WhatsApp
+
+Instagram
+
+Logo
+
+Cor principal
+
+Cor secundária
+
+Mensagem padrão
+
+Tempo para retorno
+
+Dias
+
+15
+
+20
+
+30
+
+45
+
+⸻
+
+Permissões
+
+Administrador
+
+Tudo
+
+Funcionário
+
+Cadastrar clientes
+
+Registrar atendimento
+
+Visualizar agenda
+
+Sem acesso financeiro
+
+⸻
+
+Login
+
+Email
+
+Senha
+
+Recuperar senha
+
+Criar conta
+
+⸻
+
+Landing Page
+
+Hero
+
+Headline
+
+“O CRM que faz seus clientes voltarem automaticamente.”
+
+CTA
+
+Teste grátis
+
+Benefícios
+
+Mais clientes recorrentes
+
+Automação WhatsApp
+
+Programa Fidelidade
+
+Relatórios Inteligentes
+
+Depoimentos
+
+Planos
+
+FAQ
+
+Footer
+
+⸻
+
+Plano
+
+Gratuito
+
+Até 100 clientes
+
+1 barbeiro
+
+⸻
+
+Pro
+
+Clientes ilimitados
+
+Campanhas ilimitadas
+
+IA
+
+Cupons
+
+Relatórios
+
+WhatsApp
+
+⸻
+
+Design
+
+Visual premium
+
+Minimalista
+
+Inspirado em
+
+Stripe
+
+Linear
+
+Notion
+
+Vercel
+
+Apple
+
+Bordas arredondadas
+
+Cards grandes
+
+Muito espaço em branco
+
+Animações suaves
+
+Dark Mode
+
+Light Mode
+
+Responsivo
+
+⸻
+
+Funcionalidades Extras
+
+Pesquisa instantânea de clientes
+
+Filtro por barbeiro
+
+Filtro por data
+
+Exportação CSV
+
+Importação CSV
+
+Backup automático
+
+Logs
+
+Sistema Multiempresa
+
+Cada barbearia isolada
+
+Row Level Security no Supabase
+
+⸻
+
+Regras de Negócio
+
+* Cada usuário pertence a uma única barbearia.
+* Cada barbearia visualiza apenas seus próprios dados usando Row Level Security (RLS) no Supabase.
+* Ao finalizar um atendimento, atualizar automaticamente ultimo_atendimento e total_visitas do cliente.
+* Cada novo atendimento cancela notificações pendentes e agenda um novo ciclo de retorno.
+* As campanhas são configuráveis (15, 20, 30, 45 dias etc.).
+* Cupons possuem validade, limite de uso e controle de utilização.
+* Clientes podem ser marcados como Ativo, Em risco (mais de X dias sem retorno) e Perdido (mais de Y dias sem retorno).
+* Todas as operações importantes devem ser registradas em um log de auditoria.
+
+⸻
+
+Código
+
+Gerar código limpo.
+
+Utilizar TypeScript.
+
+Arquitetura baseada em componentes.
+
+Hooks reutilizáveis.
+
+Validação com Zod.
+
+React Hook Form.
+
+Prisma não deve ser utilizado (usar apenas Supabase).
+
+Criar componentes reutilizáveis.
+
+Seguir boas práticas.
+
+Código documentado.
+
+Preparado para escalar.
+
+⸻
+
+Observação estratégica
+
+Se eu estivesse construindo este produto para competir no mercado em 2026, faria uma evolução importante: não chamaria de sistema para barbearia, mas de CRM Inteligente para Barbearias. Desde o primeiro dia, deixaria a arquitetura preparada para suportar outros segmentos (salões de beleza, clínicas, pet shops, estéticas e oficinas) apenas trocando o tema e pequenas regras de negócio. Assim, você desenvolve um único núcleo (engine de CRM e automações) e expande para vários nichos sem reescrever o sistema. Isso aumenta muito o potencial de crescimento do Micro-SaaS
