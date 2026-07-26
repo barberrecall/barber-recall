@@ -53,6 +53,10 @@ Thumbs.db
 .env.*
 !.env.example
 
+# Exceção: o `.env` do app móvel guarda só configuração pública do Expo CLI, que
+# o bundle já expõe no aparelho. Segredos de servidor ficam no `.env` da raiz.
+!artifacts/barber-app/.env
+
 # Ajustes locais do Claude Code: caminhos absolutos e ids de sessão da máquina.
 # As skills em .claude/skills/ são compartilhadas e ficam versionadas.
 .claude/settings.local.json

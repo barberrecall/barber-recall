@@ -60,13 +60,19 @@ router.patch("/coupons/:id", async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   const { codigo, tipo, valor, validade, ativo, usoMaximo } = req.body;
+
+  // Limpar "validade" ou "uso máximo" chega como string vazia. `validade` é
+  // coluna `date` e `uso_maximo` é integer — o Postgres rejeita '' nas duas e a
+  // query inteira falha com 500. Mesmo tratamento aplicado em /clients.
+  const orNull = (value: unknown) => (value === "" ? null : value);
+
   const updates: Record<string, unknown> = {};
   if (codigo !== undefined) updates.codigo = codigo;
   if (tipo !== undefined) updates.tipo = tipo;
   if (valor !== undefined) updates.valor = String(valor);
-  if (validade !== undefined) updates.validade = validade;
+  if (validade !== undefined) updates.validade = orNull(validade);
   if (ativo !== undefined) updates.ativo = ativo;
-  if (usoMaximo !== undefined) updates.usoMaximo = usoMaximo;
+  if (usoMaximo !== undefined) updates.usoMaximo = orNull(usoMaximo);
   const [c] = await db.update(couponsTable).set(updates).where(and(eq(couponsTable.id, id), eq(couponsTable.barbershopId, barbershopId))).returning();
   if (!c) { res.status(404).json({ error: "not found" }); return; }
   res.json(fmt(c));

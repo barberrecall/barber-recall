@@ -12,12 +12,15 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import {
   MessageSquare,
   Send,
   RefreshCw,
   CheckCircle2,
   Clock,
+  Plus,
+  Pencil,
 } from "lucide-react-native";
 import {
   useListNotifications,
@@ -112,15 +115,22 @@ function CampaignRow({
   campaign,
   onToggle,
   toggling,
+  onEdit,
 }: {
   campaign: Campaign;
   onToggle: (campaign: Campaign) => void;
   toggling: boolean;
+  onEdit: (campaign: Campaign) => void;
 }) {
   return (
     <Card className="mb-2">
       <View className="flex-row items-center justify-between gap-3">
-        <View className="flex-1">
+        <Pressable
+          onPress={() => onEdit(campaign)}
+          accessibilityRole="button"
+          accessibilityLabel={`Editar ${campaign.nome}`}
+          className="flex-1 active:opacity-70"
+        >
           <Text className="text-base font-semibold text-foreground" numberOfLines={1}>
             {campaign.nome}
           </Text>
@@ -133,7 +143,9 @@ function CampaignRow({
               <Badge label={campaign.cupomCodigo} color="#F97316" />
             ) : null}
           </View>
-        </View>
+        </Pressable>
+
+        <Pencil size={14} color="#8A94A6" />
 
         <Switch
           value={campaign.ativo}
@@ -149,6 +161,7 @@ function CampaignRow({
 
 export default function CampaignsScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [busyId, setBusyId] = useState<number | null>(null);
 
@@ -314,9 +327,21 @@ export default function CampaignsScreen() {
           </>
         ) : null}
 
-        <Text className="mb-2 mt-6 text-base font-semibold text-foreground">
-          Campanhas configuradas
-        </Text>
+        <View className="mb-2 mt-6 flex-row items-center justify-between">
+          <Text className="text-base font-semibold text-foreground">
+            Campanhas configuradas
+          </Text>
+
+          <Pressable
+            onPress={() => router.push("/campaigns/edit")}
+            accessibilityRole="button"
+            accessibilityLabel="Nova campanha"
+            className="h-9 flex-row items-center gap-1.5 rounded-lg bg-primary px-3 active:opacity-80"
+          >
+            <Plus size={14} color="#0A0E1A" />
+            <Text className="text-xs font-semibold text-primary-foreground">Nova</Text>
+          </Pressable>
+        </View>
 
         {loadingCampaigns ? (
           <ActivityIndicator color="#F59E0B" />
@@ -327,13 +352,14 @@ export default function CampaignsScreen() {
               campaign={campaign}
               onToggle={handleToggle}
               toggling={busyId === campaign.id}
+              onEdit={(item) => router.push(`/campaigns/edit?id=${item.id}`)}
             />
           ))
         ) : (
           <EmptyState
             icon={MessageSquare}
             title="Nenhuma campanha"
-            description="As campanhas são criadas no CRM web por enquanto."
+            description="Crie uma campanha de retorno para o sistema começar a sugerir contatos."
           />
         )}
       </ScrollView>

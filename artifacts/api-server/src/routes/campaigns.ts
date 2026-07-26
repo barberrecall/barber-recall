@@ -58,12 +58,17 @@ router.patch("/campaigns/:id", async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
   const { nome, tipo, dias, mensagem, cupomId, ativo } = req.body;
+
+  // Desanexar o cupom chega como string vazia; `cupom_id` é integer e o
+  // Postgres rejeita ''. Mesmo tratamento aplicado em /clients e /coupons.
+  const orNull = (value: unknown) => (value === "" ? null : value);
+
   const updates: Record<string, unknown> = {};
   if (nome !== undefined) updates.nome = nome;
   if (tipo !== undefined) updates.tipo = tipo;
   if (dias !== undefined) updates.dias = dias;
   if (mensagem !== undefined) updates.mensagem = mensagem;
-  if (cupomId !== undefined) updates.cupomId = cupomId;
+  if (cupomId !== undefined) updates.cupomId = orNull(cupomId);
   if (ativo !== undefined) updates.ativo = ativo;
   const [c] = await db.update(campaignsTable).set(updates).where(and(eq(campaignsTable.id, id), eq(campaignsTable.barbershopId, barbershopId))).returning();
   if (!c) { res.status(404).json({ error: "not found" }); return; }
