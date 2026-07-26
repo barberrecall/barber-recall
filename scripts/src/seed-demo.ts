@@ -78,6 +78,13 @@ const SERVICOS = [
  * então aparece como `active` por ter sido cadastrado agora — cliente novo não
  * é cliente em risco.
  */
+/** `codigo` é opcional na API — omitir faz o servidor gerar um. */
+const CUPONS = [
+  { codigo: "VOLTA10", tipo: "percent" as const, valor: 10, usoMaximo: 50 },
+  { codigo: "ANIVER20", tipo: "percent" as const, valor: 20, usoMaximo: 30 },
+  { codigo: "FIEL15", tipo: "fixed" as const, valor: 15 },
+];
+
 /**
  * O `dias` da campanha não antecipa o disparo: o piso é sempre o
  * `diasRetorno` da barbearia (skill `campanhas-whatsapp`), então o gatilho
@@ -180,6 +187,7 @@ async function main(): Promise<void> {
     }
   }
 
+  for (const cupom of CUPONS) await post("/coupons", cupom);
   for (const campanha of CAMPANHAS) await post("/campaigns", campanha);
 
   // Monta os "Disparos de hoje" a partir das campanhas recém-criadas, para a
@@ -191,7 +199,8 @@ async function main(): Promise<void> {
   console.log(
     `Criados: ${barbeiros.length} barbeiros, ${servicos.length} serviços, ` +
       `${CLIENTES.length} clientes, ${atendimentos} atendimentos, ` +
-      `${CAMPANHAS.length} campanhas, ${gerados.generated} disparos pendentes.`,
+      `${CUPONS.length} cupons, ${CAMPANHAS.length} campanhas, ` +
+      `${gerados.generated} disparos pendentes.`,
   );
 }
 

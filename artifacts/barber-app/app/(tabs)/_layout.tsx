@@ -6,6 +6,7 @@ import {
   Users,
   CalendarDays,
   MessageSquare,
+  MoreHorizontal,
 } from "lucide-react-native";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -78,6 +79,15 @@ export default function TabsLayout() {
           title: "Campanhas",
           tabBarIcon: ({ color, size }) => (
             <MessageSquare color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: "Mais",
+          tabBarIcon: ({ color, size }) => (
+            <MoreHorizontal color={color} size={size} />
           ),
         }}
       />

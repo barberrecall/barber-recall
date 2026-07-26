@@ -9,29 +9,20 @@ import {
   Banknote,
   Ticket,
   Activity,
-  LogOut,
 } from "lucide-react-native";
-import { Pressable } from "react-native";
-import { useRouter } from "expo-router";
 import { useGetDashboardStats } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/auth-context";
 import { StatCard, Card } from "@/components/ui";
 
 export default function DashboardScreen() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   // The generated React Query hook from the OpenAPI spec — reused verbatim from
   // the web build. It needs no native-specific variant: the shared customFetch
   // prepends the base URL and attaches the Bearer token.
   const { data: stats, isLoading, isError, error, refetch, isRefetching } =
     useGetDashboardStats();
-
-  const handleLogout = async () => {
-    await logout();
-    router.replace("/login");
-  };
 
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
@@ -45,14 +36,6 @@ export default function DashboardScreen() {
           ) : null}
         </View>
 
-        <Pressable
-          onPress={handleLogout}
-          accessibilityRole="button"
-          accessibilityLabel="Sair"
-          className="h-10 w-10 items-center justify-center rounded-lg active:opacity-70"
-        >
-          <LogOut size={20} color="#8A94A6" />
-        </Pressable>
       </View>
 
       <ScrollView
