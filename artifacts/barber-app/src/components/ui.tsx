@@ -114,3 +114,80 @@ export function StatCard({
     </Card>
   );
 }
+
+/**
+ * Selo colorido. A cor chega como hex em vez de classe Tailwind porque o
+ * NativeWind resolve classes em tempo de build — uma classe montada
+ * dinamicamente (`text-${cor}-500`) não existiria no CSS gerado.
+ */
+export function Badge({ label, color }: { label: string; color: string }) {
+  return (
+    <View
+      className="self-start rounded-full border px-2 py-0.5"
+      style={{ borderColor: `${color}33`, backgroundColor: `${color}1A` }}
+    >
+      <Text className="text-xs font-medium" style={{ color }}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+const AVATAR_COLORS = [
+  "#3B82F6",
+  "#8B5CF6",
+  "#10B981",
+  "#F59E0B",
+  "#F43F5E",
+  "#06B6D4",
+  "#F97316",
+  "#EC4899",
+];
+
+/** Mesma regra do web: cor estável derivada do nome. */
+export function avatarColor(name: string): string {
+  let n = 0;
+  for (let i = 0; i < name.length; i++) n += name.charCodeAt(i);
+  return AVATAR_COLORS[n % AVATAR_COLORS.length];
+}
+
+export function Avatar({ name }: { name: string }) {
+  const color = avatarColor(name);
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+
+  return (
+    <View
+      className="h-10 w-10 items-center justify-center rounded-full"
+      style={{ backgroundColor: `${color}33` }}
+    >
+      <Text className="text-sm font-semibold" style={{ color }}>
+        {initials}
+      </Text>
+    </View>
+  );
+}
+
+export function EmptyState({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}) {
+  return (
+    <View className="items-center px-6 py-16">
+      <Icon size={40} color="#8A94A6" />
+      <Text className="mt-4 text-base font-semibold text-foreground">{title}</Text>
+      <Text className="mt-1 text-center text-sm text-muted-foreground">
+        {description}
+      </Text>
+    </View>
+  );
+}
