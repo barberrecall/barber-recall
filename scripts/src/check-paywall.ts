@@ -10,6 +10,7 @@
  */
 import { sql } from "drizzle-orm";
 import { db, barbershopTable, usersTable } from "@workspace/db";
+import { assertDevDatabase } from "@workspace/db/guard";
 
 const BASE = process.env.API_URL ?? "http://localhost:8080";
 const TRIAL_DAYS = 3; // igual a TRIAL_DAYS em routes/barbershop.ts
@@ -24,6 +25,14 @@ async function api(path: string, init: RequestInit = {}) {
 
 async function main(): Promise<void> {
   let userId: number | null = null;
+
+  // Cria e apaga registros, e mexe em trial_starts_at por SQL direto. Mesmo
+  // limpando tudo no fim, isso não deveria acontecer em produção por descuido.
+  //
+  // Atenção ao usar ALLOW_PROD_DB: este script fala com dois lugares. Se
+  // API_URL apontar para um servidor e DATABASE_URL para outro banco, ele cria
+  // a conta num e recua o trial no outro — e o teste falha por motivo errado.
+  assertDevDatabase("check:paywall");
 
   try {
     console.log(`API: ${BASE}`);
