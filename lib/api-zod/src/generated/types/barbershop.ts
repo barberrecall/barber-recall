@@ -5,6 +5,7 @@
  * Barber Recall CRM API
  * OpenAPI spec version: 0.1.0
  */
+import type { BarbershopPlan } from './barbershopPlan';
 
 export interface Barbershop {
   id: number;
@@ -25,4 +26,15 @@ export interface Barbershop {
   mensagemPadrao?: string | null;
   diasRetorno?: number;
   createdAt: Date;
+  plan?: BarbershopPlan;
+  trialActive?: boolean;
+  trialExpired?: boolean;
+  /**
+     * Dias restantes do trial (plano free) ou da assinatura Pro.
+     * @nullable
+     */
+  daysRemaining?: number | null;
+  trialStartsAt?: Date;
+  /** @nullable */
+  planExpiresAt?: Date | null;
 }

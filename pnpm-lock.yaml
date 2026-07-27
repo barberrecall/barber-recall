@@ -733,6 +733,13 @@ importers:
         version: 0.31.10
 
   scripts:
+    dependencies:
+      '@workspace/db':
+        specifier: workspace:*
+        version: link:../lib/db
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.2(@types/pg@8.20.0)(pg@8.22.0)
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -1637,8 +1644,8 @@ packages:
     resolution: {integrity: sha512-j3NKgXE3qd0gvSYsCqDLb3VhW5KEg030VQhMnv5c0qNzPp6jBmF7cCDIQG4ROZIOqEfGbUoDDMAAzaC30vV99g==}
     engines: {node: '>=18.0.0'}
 
-  '@oclif/plugin-autocomplete@3.2.53':
-    resolution: {integrity: sha512-cGAgN9ujTDxa6C84d6XNVsmoFnDFfHwdiykAnAfym3oBLxoXBNYMZhmfnZ8KBWDy/r/DYf11BrGJwqKl2P0iSA==}
+  '@oclif/plugin-autocomplete@3.2.54':
+    resolution: {integrity: sha512-1FsvWR/T4UAcydM7JJgl1tn697Z51S+jLNL7Y/R8FXsU6HI/i9Ib+iSf0Vn+5Kjzm3iE1A6KzB5uz72Ic62ivg==}
     engines: {node: '>=18.0.0'}
 
   '@orval/angular@8.18.0':
@@ -7952,7 +7959,7 @@ snapshots:
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
 
-  '@oclif/plugin-autocomplete@3.2.53(supports-color@8.1.1)':
+  '@oclif/plugin-autocomplete@3.2.54(supports-color@8.1.1)':
     dependencies:
       '@oclif/core': 4.13.0
       ansis: 3.17.0
@@ -10149,7 +10156,7 @@ snapshots:
       '@expo/steps': 21.1.0
       '@expo/timeago.js': 1.0.0
       '@oclif/core': 4.13.0
-      '@oclif/plugin-autocomplete': 3.2.53(supports-color@8.1.1)
+      '@oclif/plugin-autocomplete': 3.2.54(supports-color@8.1.1)
       '@segment/ajv-human-errors': 2.16.0(ajv@8.11.0)
       '@sentry/node': 7.77.0(supports-color@8.1.1)
       '@urql/core': 4.0.11(graphql@16.8.1)

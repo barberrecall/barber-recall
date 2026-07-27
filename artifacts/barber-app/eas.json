@@ -18,6 +18,9 @@
       "android": {
         "buildType": "apk"
       },
+      "ios": {
+        "simulator": false
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-production-3ceb.up.railway.app"
       }
@@ -27,6 +30,9 @@
       "node": "24.10.0",
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "simulator": false
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-production-3ceb.up.railway.app"

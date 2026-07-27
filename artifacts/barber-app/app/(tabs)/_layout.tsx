@@ -2,6 +2,7 @@ import { Redirect, Tabs } from "expo-router";
 import { View, ActivityIndicator } from "react-native";
 import { useAuth } from "@/contexts/auth-context";
 import { FloatingTabBar } from "@/components/floating-tab-bar";
+import { SubscriptionGate } from "@/components/subscription-gate";
 import { INK } from "@/components/ui";
 
 /**
@@ -26,19 +27,23 @@ export default function TabsLayout() {
   // consulta parte com token ausente e recebe 401.
   if (!user) return <Redirect href="/login" />;
 
+  // O bloqueio envolve as abas inteiras, não cada tela: caso contrário o
+  // barbeiro navegaria por telas vazias em vez de entender que o acesso expirou.
   return (
-    <Tabs
-      tabBar={(props) => <FloatingTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-        sceneStyle: { backgroundColor: "#F1F2F4" },
-      }}
-    >
-      <Tabs.Screen name="dashboard" />
-      <Tabs.Screen name="clients" />
-      <Tabs.Screen name="appointments" />
-      <Tabs.Screen name="campaigns" />
-      <Tabs.Screen name="more" />
-    </Tabs>
+    <SubscriptionGate>
+      <Tabs
+        tabBar={(props) => <FloatingTabBar {...props} />}
+        screenOptions={{
+          headerShown: false,
+          sceneStyle: { backgroundColor: "#F1F2F4" },
+        }}
+      >
+        <Tabs.Screen name="dashboard" />
+        <Tabs.Screen name="clients" />
+        <Tabs.Screen name="appointments" />
+        <Tabs.Screen name="campaigns" />
+        <Tabs.Screen name="more" />
+      </Tabs>
+    </SubscriptionGate>
   );
 }

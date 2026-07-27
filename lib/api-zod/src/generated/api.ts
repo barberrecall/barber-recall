@@ -32,7 +32,13 @@ export const GetBarbershopResponse = zod.object({
   "instagram": zod.string().nullish(),
   "mensagemPadrao": zod.string().nullish(),
   "diasRetorno": zod.number().optional(),
-  "createdAt": zod.coerce.date()
+  "createdAt": zod.coerce.date(),
+  "plan": zod.enum(['free', 'pro']).optional(),
+  "trialActive": zod.boolean().optional(),
+  "trialExpired": zod.boolean().optional(),
+  "daysRemaining": zod.number().nullish().describe('Dias restantes do trial (plano free) ou da assinatura Pro.'),
+  "trialStartsAt": zod.coerce.date().optional(),
+  "planExpiresAt": zod.coerce.date().nullish()
 })
 
 
@@ -66,7 +72,13 @@ export const UpdateBarbershopResponse = zod.object({
   "instagram": zod.string().nullish(),
   "mensagemPadrao": zod.string().nullish(),
   "diasRetorno": zod.number().optional(),
-  "createdAt": zod.coerce.date()
+  "createdAt": zod.coerce.date(),
+  "plan": zod.enum(['free', 'pro']).optional(),
+  "trialActive": zod.boolean().optional(),
+  "trialExpired": zod.boolean().optional(),
+  "daysRemaining": zod.number().nullish().describe('Dias restantes do trial (plano free) ou da assinatura Pro.'),
+  "trialStartsAt": zod.coerce.date().optional(),
+  "planExpiresAt": zod.coerce.date().nullish()
 })
 
 

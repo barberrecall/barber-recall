@@ -15,6 +15,7 @@ export * from './barber';
 export * from './barberInput';
 export * from './barbershop';
 export * from './barbershopInput';
+export * from './barbershopPlan';
 export * from './barberUpdate';
 export * from './campaign';
 export * from './campaignInput';

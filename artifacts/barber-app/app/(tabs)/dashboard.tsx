@@ -20,6 +20,7 @@ import {
   INK_MUTED,
 } from "@/components/ui";
 import { BarChartCard, AreaChartCard } from "@/components/charts";
+import { TrialBanner } from "@/components/subscription-gate";
 
 const money = (value: number) =>
   `R$ ${value.toFixed(2).replace(".", ",")}`;
@@ -70,6 +71,8 @@ export default function DashboardScreen() {
         title={primeiroNome || "Início"}
         right={<Chip label="Hoje" />}
       />
+
+      <TrialBanner />
 
       <ScrollView
         contentContainerStyle={{

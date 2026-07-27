@@ -8,7 +8,10 @@
     "dev:tunnel": "expo start --tunnel",
     "android": "expo start --lan --android",
     "ios": "expo start --lan --ios",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build:apk": "eas build --platform android --profile preview",
+    "build:ios": "eas build --platform ios --profile production",
+    "build:store": "eas build --platform all --profile production"
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^7.18.14",

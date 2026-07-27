@@ -7,10 +7,15 @@
     "hello": "tsx ./src/hello.ts",
     "seed:demo": "tsx ./src/seed-demo.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "icons": "tsx ./src/make-icons.ts"
+    "icons": "tsx ./src/make-icons.ts",
+    "check:paywall": "tsx ./src/check-paywall.ts"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "tsx": "catalog:"
+  },
+  "dependencies": {
+    "@workspace/db": "workspace:*",
+    "drizzle-orm": "catalog:"
   }
 }

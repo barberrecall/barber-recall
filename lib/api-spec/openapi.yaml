@@ -828,6 +828,25 @@ components:
         createdAt:
           type: string
           format: date-time
+        # Estado de assinatura. Calculado por computeTrialStatus em
+        # routes/barbershop.ts e devolvido desde sempre, mas não declarado — o
+        # CRM web lia por fetch cru. Declarado para o app usar tipos gerados.
+        plan:
+          type: string
+          enum: [free, pro]
+        trialActive:
+          type: boolean
+        trialExpired:
+          type: boolean
+        daysRemaining:
+          type: ["integer", "null"]
+          description: Dias restantes do trial (plano free) ou da assinatura Pro.
+        trialStartsAt:
+          type: string
+          format: date-time
+        planExpiresAt:
+          type: ["string", "null"]
+          format: date-time
 
     BarbershopInput:
       type: object

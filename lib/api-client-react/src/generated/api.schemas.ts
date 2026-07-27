@@ -9,6 +9,14 @@ export interface HealthStatus {
   status: string;
 }
 
+export type BarbershopPlan = typeof BarbershopPlan[keyof typeof BarbershopPlan];
+
+
+export const BarbershopPlan = {
+  free: 'free',
+  pro: 'pro',
+} as const;
+
 export interface Barbershop {
   id: number;
   nome: string;
@@ -28,6 +36,17 @@ export interface Barbershop {
   mensagemPadrao?: string | null;
   diasRetorno?: number;
   createdAt: string;
+  plan?: BarbershopPlan;
+  trialActive?: boolean;
+  trialExpired?: boolean;
+  /**
+     * Dias restantes do trial (plano free) ou da assinatura Pro.
+     * @nullable
+     */
+  daysRemaining?: number | null;
+  trialStartsAt?: string;
+  /** @nullable */
+  planExpiresAt?: string | null;
 }
 
 export interface BarbershopInput {
