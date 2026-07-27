@@ -5,18 +5,28 @@ import { defineConfig } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
-const rawPort = process.env.PORT;
+/**
+ * `PORT` só alimenta `server.port` e `preview.port`. Exigi-la também no build
+ * obrigava quem empacota — o Dockerfile, entre outros — a inventar um número de
+ * porta que nunca é usado, e a falha só aparecia no meio da construção da
+ * imagem. Agora a exigência acompanha quem realmente precisa dela.
+ */
+function requirePort(): number {
+  const raw = process.env.PORT;
 
-if (!rawPort) {
-  throw new Error(
-    'PORT environment variable is required but was not provided.',
-  );
-}
+  if (!raw) {
+    throw new Error(
+      'PORT environment variable is required but was not provided.',
+    );
+  }
 
-const port = Number(rawPort);
+  const port = Number(raw);
 
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
+  if (Number.isNaN(port) || port <= 0) {
+    throw new Error(`Invalid PORT value: "${raw}"`);
+  }
+
+  return port;
 }
 
 const basePath = process.env.BASE_PATH;
@@ -27,7 +37,7 @@ if (!basePath) {
   );
 }
 
-export default defineConfig({
+export default defineConfig(async ({ command }) => ({
   base: basePath,
   plugins: [
     react(),
@@ -65,7 +75,7 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    port,
+    port: command === 'serve' ? requirePort() : undefined,
     strictPort: true,
     host: '0.0.0.0',
     allowedHosts: true,
@@ -86,8 +96,8 @@ export default defineConfig({
       : {}),
   },
   preview: {
-    port,
+    port: command === 'serve' ? requirePort() : undefined,
     host: '0.0.0.0',
     allowedHosts: true,
   },
-});
+}));

@@ -1,3 +1,5 @@
+import path from "node:path";
+import { existsSync } from "node:fs";
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
@@ -114,5 +116,42 @@ app.use((req, res, next) => {
 });
 
 app.use("/api", router);
+
+/**
+ * Serve o CRM web pelo mesmo servidor da API.
+ *
+ * Não é economia de infraestrutura, é o que faz a cobrança funcionar. O
+ * Mercado Pago precisa de uma URL pública de retorno e de webhook (`APP_URL`),
+ * e o app móvel precisa de um endereço real para onde mandar quem vai assinar.
+ * Sem um front publicado, o bloqueio por assinatura vira tranca sem chave.
+ *
+ * Mesma origem também dispensa `ALLOWED_ORIGINS`: o navegador não faz
+ * requisição cruzada quando a página e a API dividem o host, e o cookie de
+ * sessão viaja sem depender de configuração de CORS.
+ *
+ * Fica depois de `/api` de propósito. O fallback de SPA responde qualquer
+ * caminho que não casou antes, e se viesse primeiro devolveria o index.html
+ * para rotas de API inexistentes — trocando um 404 honesto por uma página HTML
+ * que quebraria o cliente longe da causa.
+ */
+const webDir = path.resolve(import.meta.dirname, "..", "..", "barber-crm", "dist", "public");
+
+if (existsSync(webDir)) {
+  app.use(express.static(webDir));
+
+  app.get("/{*path}", (req, res, next) => {
+    // Um 404 de API já foi respondido acima; aqui só chega o que sobrou.
+    if (req.path.startsWith("/api/")) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(webDir, "index.html"));
+  });
+} else {
+  logger.warn(
+    { webDir },
+    "CRM web não encontrado — servindo apenas a API. Rode o build de barber-crm para publicar o front.",
+  );
+}
 
 export default app;

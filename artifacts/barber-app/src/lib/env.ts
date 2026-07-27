@@ -28,3 +28,21 @@ export function apiBaseUrl(): string {
 
   return `http://${host}:${API_PORT}`;
 }
+
+/**
+ * Endereço do CRM web, para onde vai quem precisa assinar.
+ *
+ * Derivado de `apiBaseUrl` porque o front e a API são servidos pelo mesmo host
+ * (ver artifacts/api-server/src/app.ts). Antes isto era uma constante escrita à
+ * mão apontando para um domínio que ainda não existia — o botão de renovar
+ * assinatura levava a lugar nenhum, e nada no código acusava.
+ *
+ * `EXPO_PUBLIC_WEB_URL` assume quando houver domínio próprio, sem exigir
+ * mudança de código.
+ */
+export function webBaseUrl(): string {
+  const override = process.env.EXPO_PUBLIC_WEB_URL;
+  if (override) return override.replace(/\/+$/, "");
+
+  return apiBaseUrl();
+}

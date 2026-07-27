@@ -4,6 +4,7 @@ import { Lock, LogOut } from "lucide-react-native";
 import { useGetBarbershop } from "@workspace/api-client-react";
 import { useAuth } from "@/contexts/auth-context";
 import { Pill, INK, INK_MUTED } from "@/components/ui";
+import { webBaseUrl } from "@/lib/env";
 
 /**
  * Bloqueia o app quando o acesso expirou.
@@ -27,7 +28,6 @@ import { Pill, INK, INK_MUTED } from "@/components/ui";
  * Se algum dia a assinatura passar a ser vendida via In-App Purchase, é aqui
  * que o fluxo entra — e a diferença por plataforma deixa de ser necessária.
  */
-const WEB_URL = "https://barberrecall.com.br";
 
 export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
@@ -65,7 +65,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
             label="Renovar assinatura"
             tone="ink"
             full
-            onPress={() => void Linking.openURL(WEB_URL)}
+            onPress={() => void Linking.openURL(webBaseUrl())}
           />
         ) : null}
 

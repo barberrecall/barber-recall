@@ -23,6 +23,12 @@ RUN npm install -g pnpm@11.17.0
 COPY . .
 
 RUN pnpm install --frozen-lockfile
+
+# O CRM web é servido pelo próprio api-server (ver artifacts/api-server/src/app.ts).
+# BASE_PATH é obrigatório no vite.config.ts do CRM; "/" porque o front fica na
+# raiz do mesmo host da API.
+RUN BASE_PATH=/ pnpm --filter @workspace/barber-crm run build
+
 RUN pnpm --filter @workspace/api-server run build
 
 # O Railway injeta PORT; o servidor lança erro claro se ela faltar.
