@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { requireAuth } from "../middleware/requireAuth";
+import { requireActiveSubscription } from "../middleware/requireActiveSubscription";
 import healthRouter from "./health";
 import authRouter from "./auth";
 import barbershopRouter from "./barbershop";
@@ -27,7 +28,20 @@ router.use(adminAuthRouter); // admin login/logout/me — no user account requir
 
 // All routes below require authentication
 router.use(requireAuth);
+
+// Autenticado, mas sem exigir assinatura em dia.
+//
+// `/barbershop` é como o cliente descobre que expirou — bloqueá-lo daria um
+// erro genérico no lugar da tela que explica o que houve. O painel de super
+// admin passa por `requireAuth` (portanto tem sessão de barbearia própria), e o
+// estado da assinatura dessa barbearia não pode derrubar a administração das
+// outras. Ordem entre routers não afeta o casamento de rotas — os caminhos não
+// colidem —, só define o que fica antes do portão.
 router.use(barbershopRouter);
+router.use(adminRouter); // adminOnly é aplicado dentro do router
+
+// Daqui para baixo, assinatura em dia. Ver middleware/requireActiveSubscription.
+router.use(requireActiveSubscription);
 router.use(clientsRouter);
 router.use(barbersRouter);
 router.use(servicesRouter);
@@ -38,8 +52,5 @@ router.use(notificationsRouter);
 router.use(dashboardRouter);
 router.use(reportsRouter);
 router.use(insightsRouter);
-
-// Admin routes (adminOnly middleware is applied inside the router)
-router.use(adminRouter);
 
 export default router;

@@ -13,7 +13,6 @@ import { db, barbershopTable, usersTable } from "@workspace/db";
 import { assertDevDatabase } from "@workspace/db/guard";
 
 const BASE = process.env.API_URL ?? "http://localhost:8080";
-const TRIAL_DAYS = 3; // igual a TRIAL_DAYS em routes/barbershop.ts
 
 const email = `paywall-check-${Date.now()}@barberrecall.local`;
 const senha = "verificacao123";
@@ -63,25 +62,64 @@ async function main(): Promise<void> {
 
     if (a.trialExpired) throw new Error("conta nova já vem expirada — regra de trial quebrada");
 
-    // Recua o início do trial além da janela. Só nesta barbearia.
+    // Antes de qualquer coisa: com o trial em dia, tudo tem de responder. Um
+    // portão que bloqueia demais é tão quebrado quanto um que não bloqueia, e
+    // essa metade é a que ninguém percebe até um cliente pagante reclamar.
+    const comTrialAtivo = await api("clients", { headers: auth });
+    console.log(`  trial em dia:      /clients -> HTTP ${comTrialAtivo.status}`);
+    if (comTrialAtivo.status !== 200) {
+      throw new Error(`/clients devia responder 200 com trial ativo, respondeu ${comTrialAtivo.status}`);
+    }
+
+    // Recua o início do trial muito além de qualquer janela plausível. Só nesta
+    // barbearia. Um número grande em vez de TRIAL_DAYS + 1 de propósito: assim o
+    // teste não guarda uma cópia da duração do trial que envelhece calada no dia
+    // em que TRIAL_DAYS mudar.
     await db.execute(sql`
       update ${barbershopTable}
-      set trial_starts_at = now() - make_interval(days => ${TRIAL_DAYS + 1}::int)
+      set trial_starts_at = now() - interval '10 years'
       where user_id = ${userId}
     `);
 
     const depois = await api("barbershop", { headers: auth });
     const d = depois.body as { trialExpired: boolean; trialActive: boolean; daysRemaining: number | null };
-    console.log(`  trial recuado ${TRIAL_DAYS + 1}d:  trialExpired=${d.trialExpired} trialActive=${d.trialActive} daysRemaining=${d.daysRemaining}`);
+    console.log(`  trial recuado 10 anos: trialExpired=${d.trialExpired} trialActive=${d.trialActive} daysRemaining=${d.daysRemaining}`);
 
     if (!d.trialExpired) throw new Error("trial recuado mas trialExpired continua false");
 
-    // O bloqueio é de interface: a API deve continuar respondendo, senão o app
-    // não teria como ler o estado para exibir a tela de expirado.
-    const clientes = await api("clients", { headers: auth });
-    console.log(`  /clients com trial expirado: HTTP ${clientes.status} (a API segue aberta; o bloqueio é no app)`);
+    // O servidor precisa barrar de verdade. Enquanto o bloqueio era só de tela,
+    // qualquer cliente HTTP com o token continuava lendo os dados.
+    const bloqueadas = ["clients", "appointments", "campaigns", "dashboard/stats", "reports"];
+    const abertas = ["barbershop"];
 
-    console.log("\nOK: a API vira trialExpired corretamente e o app tem o sinal para bloquear.");
+    for (const rota of bloqueadas) {
+      const r = await api(rota, { headers: auth });
+      const ok = r.status === 402;
+      console.log(`  ${ok ? "bloqueada" : "ABERTA   "}  /${rota} -> HTTP ${r.status}`);
+      if (!ok) throw new Error(`/${rota} devia responder 402 com assinatura expirada, respondeu ${r.status}`);
+    }
+
+    for (const rota of abertas) {
+      const r = await api(rota, { headers: auth });
+      const ok = r.status === 200;
+      console.log(`  ${ok ? "aberta   " : "BLOQUEADA"}  /${rota} -> HTTP ${r.status}`);
+      // Sem esta, o cliente não consegue ler o próprio estado para explicar ao
+      // barbeiro o que aconteceu — vira erro genérico em vez de tela de aviso.
+      if (!ok) throw new Error(`/${rota} precisa continuar aberta para o cliente saber que expirou, respondeu ${r.status}`);
+    }
+
+    // O painel de super admin fica fora do portão de propósito: ele administra
+    // todas as barbearias, e o estado da assinatura da barbearia própria do
+    // admin não pode derrubar isso. Aqui a conta não é admin, então o esperado é
+    // 401 (barrado por adminOnly) — o que importa é NÃO ser 402, porque 402
+    // significaria que o portão veio antes e engoliria o painel.
+    const adminR = await api("admin/stats", { headers: auth });
+    console.log(`  fora do portão  /admin/stats -> HTTP ${adminR.status} (401 esperado: não é admin)`);
+    if (adminR.status === 402) {
+      throw new Error("/admin/stats caiu atrás do portão de assinatura — o super admin perderia o painel");
+    }
+
+    console.log("\nOK: trial expira, o servidor barra as rotas de dados e mantém /barbershop legível.");
   } finally {
     if (userId !== null) {
       // Cascade leva a barbearia e o que estiver ligado a ela.

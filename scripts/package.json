@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "hello": "tsx ./src/hello.ts",
-    "seed:demo": "tsx ./src/seed-demo.ts",
+    "seed:demo": "tsx --env-file-if-exists=../.env ./src/seed-demo.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "icons": "tsx ./src/make-icons.ts",
-    "check:paywall": "tsx ./src/check-paywall.ts"
+    "check:paywall": "tsx --env-file-if-exists=../.env ./src/check-paywall.ts"
   },
   "devDependencies": {
     "@types/node": "catalog:",
