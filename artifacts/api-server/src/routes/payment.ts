@@ -10,6 +10,8 @@ import {
 } from "mercadopago";
 import { db, barbershopTable, paymentNotificationsTable } from "@workspace/db";
 import { logger } from "../lib/logger.js";
+import { chaveDoPeriodo } from "../lib/subscription";
+import { tsParaMs } from "../lib/mp-webhook";
 
 const router: IRouter = Router();
 
@@ -175,24 +177,6 @@ router.get("/payment/pix-status/:paymentId", async (req, res): Promise<void> => 
  */
 const TOLERANCIA_SEGUNDOS = 300;
 
-/**
- * Converte o `ts` da assinatura para milissegundos.
- *
- * O Mercado Pago envia epoch em **segundos**; o `toleranceSeconds` do SDK
- * compara o valor cru com `Date.now()`, que é milissegundos. A conta dá uma
- * deriva de mais de cinquenta anos e a janela reprova sempre — foi o que a
- * notificação simulada mostrou, com `TimestampOutOfTolerance` num servidor cujo
- * relógio estava a três segundos do certo.
- *
- * Aceita as duas unidades em vez de assumir segundos: se o Mercado Pago mudar
- * para milissegundos, ou se o SDK passar a normalizar, isto continua correto.
- * Epoch em segundos tem 10 dígitos até 2286; em milissegundos, 13.
- */
-function tsParaMs(ts: string): number {
-  const n = Number(ts);
-  return ts.length <= 11 ? n * 1000 : n;
-}
-
 function webhookAutentico(req: Request): { ok: true } | { ok: false; motivo: string } {
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
 
@@ -287,22 +271,6 @@ router.post("/payment/webhook", async (req, res): Promise<void> => {
      * acontece quando nossa resposta demora — ela chega com assinatura válida e
      * mesmo assim não pode conceder tempo de novo.
      */
-    /*
-     * Chave de um mês de assinatura, e não da notificação que o anunciou.
-     *
-     * Autorizar uma assinatura dispara `subscription_preapproval`; a cobrança
-     * daquele mesmo mês chega como `subscription_authorized_payment`. São duas
-     * notificações com ids diferentes falando do mesmo mês pago — deduplicar
-     * por id concederia 60 dias por 30 dias de dinheiro.
-     *
-     * Amarrando a chave à assinatura e ao mês, a segunda notificação vira
-     * repetição e é ignorada, enquanto o mês seguinte gera chave nova e é
-     * concedido normalmente. Isso também dispensa saber se o Mercado Pago
-     * dispara `subscription_authorized_payment` já na primeira cobrança ou só
-     * da segunda em diante: funciona nas duas hipóteses.
-     */
-    const chaveDoPeriodo = (preapprovalId: string, quando: Date): string =>
-      `${preapprovalId}:${quando.toISOString().slice(0, 7)}`;
 
     const registrarSeInedita = async (
       tipo: string,
