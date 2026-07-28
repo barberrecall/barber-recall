@@ -1,8 +1,29 @@
 import { Router, type IRouter, type Request } from "express";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
-import { db, usersTable, barbershopTable } from "@workspace/db";
+import { eq, and, isNull, sql } from "drizzle-orm";
+import { db, usersTable, barbershopTable, passwordResetsTable } from "@workspace/db";
 import { createAuthToken } from "../lib/authToken";
+import { logger } from "../lib/logger";
+import { enviarEmail } from "../lib/email";
+import {
+  gerarToken,
+  hashDoToken,
+  estaVencido,
+  senhaAceitavel,
+  VALIDADE_MS,
+} from "../lib/passwordReset";
+
+/**
+ * Endereço público onde o CRM web responde — é para lá que o link de
+ * recuperação aponta.
+ *
+ * Reaproveita APP_URL, a mesma variável que o Mercado Pago usa para o retorno
+ * do pagamento, em vez de criar uma segunda fonte de verdade que poderia
+ * divergir. Sem ela, cai no host local, que serve para desenvolvimento.
+ */
+function baseUrlPublica(): string {
+  return process.env.APP_URL ? `https://${process.env.APP_URL}` : "http://localhost:8080";
+}
 
 const router: IRouter = Router();
 
@@ -252,6 +273,149 @@ router.patch("/auth/email", async (req, res): Promise<void> => {
     .returning({ id: usersTable.id, email: usersTable.email, nome: usersTable.nome });
 
   res.json(atualizado);
+});
+
+/**
+ * POST /auth/forgot-password — pede o link de recuperação.
+ *
+ * Responde **sempre 200**, exista o e-mail ou não. Distinguir os dois casos
+ * transformaria esta rota num verificador de contas: qualquer um descobriria
+ * quais barbearias usam o sistema testando endereços, o que é o primeiro passo
+ * de um ataque direcionado e também um vazamento em si.
+ *
+ * Pelo mesmo motivo a falha de envio é engolida — se o e-mail não sair, quem
+ * pediu vê a mesma mensagem. O log registra a diferença para quem opera.
+ */
+router.post("/auth/forgot-password", async (req, res): Promise<void> => {
+  const { email } = req.body as { email?: string };
+
+  // A resposta é a mesma em todos os caminhos daqui para baixo.
+  const resposta = {
+    message: "Se este e-mail estiver cadastrado, enviamos um link de recuperação.",
+  };
+
+  if (!email || typeof email !== "string") {
+    res.json(resposta);
+    return;
+  }
+
+  const normalizado = email.toLowerCase().trim();
+
+  try {
+    const [user] = await db
+      .select({ id: usersTable.id, email: usersTable.email, nome: usersTable.nome })
+      .from(usersTable)
+      .where(eq(usersTable.email, normalizado));
+
+    if (user) {
+      /*
+       * Pedidos anteriores da mesma conta são invalidados.
+       *
+       * Sem isto, pedir três vezes deixaria três códigos válidos circulando, e
+       * cada e-mail antigo continuaria sendo uma chave da conta. O último
+       * pedido é o único que vale.
+       */
+      await db
+        .update(passwordResetsTable)
+        .set({ usedAt: new Date() })
+        .where(and(eq(passwordResetsTable.userId, user.id), isNull(passwordResetsTable.usedAt)));
+
+      const token = gerarToken();
+
+      await db.insert(passwordResetsTable).values({
+        userId: user.id,
+        tokenHash: hashDoToken(token),
+        expiresAt: new Date(Date.now() + VALIDADE_MS),
+      });
+
+      const link = `${baseUrlPublica()}/redefinir-senha?token=${token}`;
+      const primeiroNome = user.nome.split(" ")[0] ?? "";
+
+      await enviarEmail({
+        para: user.email,
+        assunto: "Recuperar sua senha do Barber Recall",
+        textoSimples:
+          `Olá, ${primeiroNome}.\n\n` +
+          `Você pediu para recuperar a senha do Barber Recall. Abra o endereço abaixo para escolher uma nova:\n\n` +
+          `${link}\n\n` +
+          `O link vale por 1 hora e só pode ser usado uma vez.\n\n` +
+          `Se não foi você que pediu, ignore esta mensagem — sua senha continua a mesma.`,
+        html:
+          `<p>Olá, ${primeiroNome}.</p>` +
+          `<p>Você pediu para recuperar a senha do Barber Recall.</p>` +
+          `<p><a href="${link}">Escolher uma nova senha</a></p>` +
+          `<p>O link vale por 1 hora e só pode ser usado uma vez.</p>` +
+          `<p>Se não foi você que pediu, ignore esta mensagem — sua senha continua a mesma.</p>`,
+      });
+    }
+  } catch (err) {
+    // Falhar aqui não pode mudar a resposta, senão o tempo e o corpo revelam
+    // que o e-mail existe.
+    logger.error({ err }, "Falha ao processar pedido de recuperação de senha");
+  }
+
+  res.json(resposta);
+});
+
+/**
+ * POST /auth/reset-password — usa o código e define a nova senha.
+ *
+ * Ao trocar a senha, todas as sessões daquele usuário são destruídas. É a parte
+ * que se costuma esquecer: se alguém invadiu a conta, trocar a senha sem
+ * derrubar as sessões existentes deixa o invasor logado enquanto o dono acha
+ * que resolveu.
+ */
+router.post("/auth/reset-password", async (req, res): Promise<void> => {
+  const { token, novaSenha } = req.body as { token?: string; novaSenha?: string };
+
+  if (!token || typeof token !== "string") {
+    res.status(400).json({ error: "Link de recuperação inválido." });
+    return;
+  }
+
+  const validacao = senhaAceitavel(novaSenha);
+  if (!validacao.ok) {
+    res.status(400).json({ error: validacao.motivo });
+    return;
+  }
+
+  const [pedido] = await db
+    .select()
+    .from(passwordResetsTable)
+    .where(eq(passwordResetsTable.tokenHash, hashDoToken(token)));
+
+  // Uma mensagem só para inexistente, usado e vencido: as três significam a
+  // mesma coisa para quem está na tela — peça outro link.
+  const invalido = { error: "Link de recuperação inválido ou expirado. Peça um novo." };
+
+  if (!pedido || pedido.usedAt || estaVencido(pedido.expiresAt)) {
+    res.status(400).json(invalido);
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(novaSenha as string, 12);
+
+  await db.update(usersTable).set({ passwordHash }).where(eq(usersTable.id, pedido.userId));
+  await db
+    .update(passwordResetsTable)
+    .set({ usedAt: new Date() })
+    .where(eq(passwordResetsTable.id, pedido.id));
+
+  /*
+   * Derruba as sessões do usuário.
+   *
+   * O `connect-pg-simple` guarda a sessão como JSON na tabela `session`, e não
+   * há índice por usuário — daí o LIKE. É varredura, mas acontece uma vez por
+   * troca de senha, num evento raro, e a alternativa seria manter um índice
+   * secundário só para isto.
+   */
+  await db.execute(
+    sql`delete from session where sess::text like ${`%"userId":${pedido.userId}%`}`,
+  );
+
+  logger.info({ userId: pedido.userId }, "Senha redefinida; sessões encerradas");
+
+  res.json({ message: "Senha alterada. Entre com a nova senha." });
 });
 
 export default router;

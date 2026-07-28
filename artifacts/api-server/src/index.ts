@@ -1,6 +1,7 @@
 import app from "./app";
 import { runMigrations } from "@workspace/db/migrate";
 import { logger } from "./lib/logger";
+import { emailConfigurado } from "./lib/email";
 
 const rawPort = process.env["PORT"];
 
@@ -71,6 +72,15 @@ async function iniciar(): Promise<void> {
   logger.info("Aplicando migrações pendentes");
   await runMigrations(process.env.DATABASE_URL);
   logger.info("Migrações em dia");
+
+  // Sem provedor de e-mail a recuperação de senha "funciona" — responde
+  // sucesso, registra o link no log — e ninguém recebe nada. O aviso existe
+  // para isso aparecer na subida, e não quando um cliente ficar sem conta.
+  if (!emailConfigurado()) {
+    logger.warn(
+      "BREVO_API_KEY/EMAIL_REMETENTE ausentes: recuperação de senha não envia e-mail, apenas registra o link no log",
+    );
+  }
 
   app.listen(port, (err) => {
     if (err) {

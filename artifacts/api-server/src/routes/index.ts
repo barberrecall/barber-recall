@@ -29,6 +29,11 @@ router.post("/auth/login", limiteDeTentativas);
 router.post("/auth/register", limiteDeTentativas);
 router.patch("/auth/email", limiteDeTentativas);
 router.post("/admin/login", limiteDeTentativas);
+// Recuperação de senha entra no mesmo freio: sem ele, /forgot-password vira
+// máquina de enviar e-mail no lugar de qualquer pessoa, e /reset-password
+// permite martelar códigos.
+router.post("/auth/forgot-password", limiteDeTentativas);
+router.post("/auth/reset-password", limiteDeTentativas);
 router.use(authRouter);
 router.use(paymentRouter); // webhook endpoint is public; checkout is auth-guarded inside
 router.use(adminAuthRouter); // admin login/logout/me — no user account required
