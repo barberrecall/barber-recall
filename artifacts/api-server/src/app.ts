@@ -78,8 +78,36 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+/**
+ * Cabeçalhos de segurança, escritos à mão em vez de `helmet`.
+ *
+ * O conjunto padrão do helmet inclui uma Content-Security-Policy restritiva que
+ * quebraria o CRM servido daqui — e afrouxá-la até funcionar daria uma política
+ * que existe só para não atrapalhar, o pior dos dois mundos. Estes três não
+ * dependem de ajuste, valem para API e para o front, e cobrem os ataques que se
+ * aplicam a este sistema.
+ *
+ * CSP fica de fora conscientemente. Vale a pena quando alguém puder investir o
+ * tempo de acertar as origens do bundle e do Mercado Pago; declarada às pressas,
+ * ela quebra a tela de pagamento.
+ */
+app.use((_req, res, next) => {
+  // Impede o navegador de "adivinhar" que um JSON é HTML e executá-lo.
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  // Sem isto o CRM pode ser embutido num iframe de outro site, que sobrepõe
+  // botões invisíveis nos seus (clickjacking).
+  res.setHeader("X-Frame-Options", "DENY");
+  // Não vaza o caminho interno que o usuário estava vendo para sites externos —
+  // inclui ids de cliente na URL.
+  res.setHeader("Referrer-Policy", "same-origin");
+  next();
+});
+
+// O limite padrão do Express já é 100 KB, mas declarado é diferente de herdado:
+// quem lê este arquivo não precisa saber a versão do Express para saber que
+// existe teto. Nenhum corpo legítimo desta API chega perto disso.
+app.use(express.json({ limit: "100kb" }));
+app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
 // Fail fast if SESSION_SECRET is missing in production
 if (process.env.NODE_ENV === "production" && !process.env.SESSION_SECRET) {
@@ -168,5 +196,52 @@ if (existsSync(webDir)) {
     "CRM web não encontrado — servindo apenas a API. Rode o build de barber-crm para publicar o front.",
   );
 }
+
+/**
+ * Tratador final de erro.
+ *
+ * Sem ele o Express usa o padrão, que responde **HTML** — numa API que só fala
+ * JSON. O cliente tenta interpretar a resposta, falha ao ler, e o erro que
+ * chega na tela é sobre JSON malformado em vez de sobre o que realmente
+ * aconteceu. Foi assim que a falha da tabela de sessões apareceu: um 500 com
+ * corpo HTML, sem uma palavra sobre a causa.
+ *
+ * A resposta é deliberadamente vaga; o log é que carrega o detalhe. Mensagem de
+ * erro interno na tela vira mapa para quem estiver sondando — nome de tabela,
+ * caminho de arquivo, versão de biblioteca.
+ *
+ * Os quatro parâmetros são obrigatórios: é a assinatura pela qual o Express
+ * reconhece um tratador de erro. Com três, ele vira middleware comum e nunca é
+ * chamado.
+ */
+app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  /*
+   * Erros que já sabem o próprio código HTTP mantêm esse código.
+   *
+   * O body-parser lança `413 entity.too.large` quando o corpo passa do limite, e
+   * o JSON malformado vira `400`. Responder 500 para os dois seria mentir para o
+   * cliente — e mandar investigar o servidor quando o problema está na
+   * requisição. Só 4xx é preservado: um 5xx vindo de biblioteca pode carregar
+   * detalhe interno na mensagem.
+   */
+  const status = (err as { status?: unknown; statusCode?: unknown } | null)?.status
+    ?? (err as { statusCode?: unknown } | null)?.statusCode;
+
+  const ehErroDoCliente = typeof status === "number" && status >= 400 && status < 500;
+
+  if (ehErroDoCliente) {
+    logger.warn({ status, metodo: req.method, url: req.originalUrl }, "Requisição recusada");
+    if (!res.headersSent) {
+      res.status(status).json({ error: "Requisição inválida." });
+    }
+    return;
+  }
+
+  logger.error({ err, metodo: req.method, url: req.originalUrl }, "Erro não tratado");
+
+  if (res.headersSent) return;
+
+  res.status(500).json({ error: "Erro interno do servidor." });
+});
 
 export default app;

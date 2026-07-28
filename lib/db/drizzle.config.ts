@@ -23,7 +23,11 @@ export default defineConfig({
   // Migrações versionadas ficam aqui e são commitadas. Antes o único caminho de
   // schema era `drizzle-kit push`, que compara com o banco vivo e aplica a
   // diferença na hora: funcionava, mas sem histórico, sem revisão e sem volta.
-  out: path.join(__dirname, "./migrations").split(path.sep).join("/"),
+  //
+  // Relativo, ao contrário de `schema` acima: o drizzle-kit trata `out` como
+  // relativo ao diretório de trabalho e concatena, então um caminho absoluto
+  // vira "C:\...\lib\db\C:\...\lib\db\migrations" e falha com ENOENT.
+  out: "./migrations",
   dialect: "postgresql",
   dbCredentials: {
     url: process.env.DATABASE_URL,

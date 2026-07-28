@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, integer, timestamp, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { barbershopTable } from "./barbershop";
@@ -11,7 +11,9 @@ export const barbersTable = pgTable("barbers", {
   ativo: boolean("ativo").notNull().default(true),
   foto: text("foto"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+},
+  (table) => [index("barbers_barbershop_idx").on(table.barbershopId)],
+);
 
 export const insertBarberSchema = createInsertSchema(barbersTable).omit({ id: true, createdAt: true });
 export type InsertBarber = z.infer<typeof insertBarberSchema>;

@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireActiveSubscription } from "../middleware/requireActiveSubscription";
+import { limiteDeTentativas } from "../middleware/rateLimit";
 import healthRouter from "./health";
 import authRouter from "./auth";
 import barbershopRouter from "./barbershop";
@@ -22,6 +23,12 @@ const router: IRouter = Router();
 
 // Public routes
 router.use(healthRouter);
+// Freio de força bruta só nas rotas de autenticação: são as únicas alcançáveis
+// sem sessão, e limitar o resto atrapalharia uso legítimo de quem já entrou.
+router.post("/auth/login", limiteDeTentativas);
+router.post("/auth/register", limiteDeTentativas);
+router.patch("/auth/email", limiteDeTentativas);
+router.post("/admin/login", limiteDeTentativas);
 router.use(authRouter);
 router.use(paymentRouter); // webhook endpoint is public; checkout is auth-guarded inside
 router.use(adminAuthRouter); // admin login/logout/me — no user account required

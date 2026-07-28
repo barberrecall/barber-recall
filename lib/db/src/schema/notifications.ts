@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, boolean, timestamp, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { barbershopTable } from "./barbershop";
@@ -28,7 +28,14 @@ export const notificationsTable = pgTable("notifications", {
   sentBy: integer("sent_by").references(() => usersTable.id, { onDelete: "set null" }),
   opened: boolean("opened").notNull().default(false),
   clicked: boolean("clicked").notNull().default(false),
-});
+},
+  (table) => [
+    index("notifications_barbershop_idx").on(table.barbershopId),
+    // "Disparos de hoje" entra pela campanha; o histórico do cliente, por ele.
+    index("notifications_campaign_idx").on(table.campaignId),
+    index("notifications_client_idx").on(table.clientId),
+  ],
+);
 
 export const insertNotificationSchema = createInsertSchema(notificationsTable).omit({ id: true });
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;

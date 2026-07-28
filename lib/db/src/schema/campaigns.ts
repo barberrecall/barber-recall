@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, integer, timestamp, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { barbershopTable } from "./barbershop";
@@ -22,7 +22,9 @@ export const campaignsTable = pgTable("campaigns", {
   cupomId: integer("cupom_id").references(() => couponsTable.id, { onDelete: "set null" }),
   ativo: boolean("ativo").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+},
+  (table) => [index("campaigns_barbershop_idx").on(table.barbershopId)],
+);
 
 export const insertCampaignSchema = createInsertSchema(campaignsTable).omit({ id: true, createdAt: true });
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;

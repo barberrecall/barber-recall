@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -22,7 +22,12 @@ export const barbershopTable = pgTable("barbershop", {
   trialStartsAt: timestamp("trial_starts_at", { withTimezone: true }).notNull().defaultNow(),
   trialNotifiedAt: timestamp("trial_notified_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+},
+  (table) => [
+    // O login resolve a barbearia a partir do usuário.
+    index("barbershop_user_idx").on(table.userId),
+  ],
+);
 
 export const insertBarbershopSchema = createInsertSchema(barbershopTable).omit({ id: true, createdAt: true });
 export type InsertBarbershop = z.infer<typeof insertBarbershopSchema>;

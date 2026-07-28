@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, numeric, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, text, numeric, timestamp, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { barbershopTable } from "./barbershop";
@@ -18,7 +18,15 @@ export const appointmentsTable = pgTable("appointments", {
   data: timestamp("data", { withTimezone: true }).notNull(),
   observacoes: text("observacoes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+},
+  (table) => [
+    // A agenda é sempre "desta barbearia, nesta data" — o par serve o filtro e a
+    // ordenação numa varredura só.
+    index("appointments_barbershop_data_idx").on(table.barbershopId, table.data),
+    // Histórico de um cliente e recálculo de recall entram por aqui.
+    index("appointments_cliente_idx").on(table.clienteId),
+  ],
+);
 
 export const insertAppointmentSchema = createInsertSchema(appointmentsTable).omit({ id: true, createdAt: true });
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;

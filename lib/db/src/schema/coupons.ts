@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, integer, numeric, date } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, integer, numeric, date, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { barbershopTable } from "./barbershop";
@@ -13,7 +13,9 @@ export const couponsTable = pgTable("coupons", {
   ativo: boolean("ativo").notNull().default(true),
   usoMaximo: integer("uso_maximo"),
   usoAtual: integer("uso_atual").notNull().default(0),
-});
+},
+  (table) => [index("coupons_barbershop_idx").on(table.barbershopId)],
+);
 
 export const insertCouponSchema = createInsertSchema(couponsTable).omit({ id: true, usoAtual: true });
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
