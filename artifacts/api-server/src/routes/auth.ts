@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request } from "express";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db, usersTable, barbershopTable } from "@workspace/db";
@@ -17,6 +17,29 @@ const router: IRouter = Router();
  */
 function wantsToken(body: unknown): boolean {
   return (body as { issueToken?: unknown } | null)?.issueToken === true;
+}
+
+/**
+ * Grava a sessão antes de responder.
+ *
+ * Sem isto, a resposta do login saía antes de a sessão estar legível no
+ * Postgres, e a primeira requisição do cliente — que chega em milissegundos —
+ * caía em 401. Medido em 25 a 90% de falha conforme a carga; reenviar o mesmo
+ * cookie logo depois funcionava, o que prova que o cookie estava correto e só a
+ * leitura ainda não enxergava a linha.
+ *
+ * O sintoma para quem usa: entrar no CRM e cair de volta na tela de login, ou
+ * ver a primeira tela vazia. Como o `express-session` grava ao encerrar a
+ * resposta, o único jeito de garantir a ordem é pedir a gravação aqui e só
+ * responder no retorno dela.
+ *
+ * Custa uma ida ao banco antes de responder, e só no login e no cadastro — não
+ * em toda requisição.
+ */
+function saveSession(req: Request): Promise<void> {
+  return new Promise((resolve, reject) => {
+    req.session.save((err) => (err ? reject(err) : resolve()));
+  });
 }
 
 // POST /auth/register
@@ -68,6 +91,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   if (!wantsToken(req.body)) {
     req.session.userId = user.id;
     req.session.barbershopId = shop.id;
+    await saveSession(req);
   }
 
   res.status(201).json({
@@ -117,6 +141,8 @@ router.post("/auth/login", async (req, res): Promise<void> => {
       // mas os tipos declaram apenas Date — usamos cast para contornar
       (req.session.cookie as unknown as { expires: boolean }).expires = false;
     }
+
+    await saveSession(req);
   }
 
   res.json({

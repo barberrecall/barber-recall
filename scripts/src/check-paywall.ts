@@ -83,24 +83,39 @@ async function main(): Promise<void> {
      *
      * Testar só o caminho conveniente é como esse tipo de falha sobrevive.
      */
-    const loginWeb = await fetch(`${BASE}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, senha }),
-    });
-    const cookie = loginWeb.headers
-      .getSetCookie()
-      .map((c) => c.split(";")[0])
-      .join("; ");
+    // Repetido, e não uma vez só: a falha que isto pegou não era determinística.
+    // A resposta do login saía antes de a sessão estar legível no Postgres, e a
+    // primeira requisição do cliente caía em 401 — entre 25 e 90% das vezes,
+    // conforme a carga. Uma única tentativa passaria na maioria das rodadas e
+    // deixaria o defeito escondido justamente por ser intermitente.
+    const TENTATIVAS = 5;
+    const resultados: number[] = [];
 
-    if (!cookie) throw new Error("login por cookie não devolveu Set-Cookie");
+    for (let i = 0; i < TENTATIVAS; i++) {
+      const loginWeb = await fetch(`${BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, senha }),
+      });
+      const cookie = loginWeb.headers
+        .getSetCookie()
+        .map((c) => c.split(";")[0])
+        .join("; ");
 
-    const comCookie = await api("barbershop", { headers: { Cookie: cookie } });
-    console.log(`  sessão por cookie: /barbershop -> HTTP ${comCookie.status}`);
-    if (comCookie.status !== 200) {
+      if (!cookie) throw new Error("login por cookie não devolveu Set-Cookie");
+
+      const comCookie = await api("barbershop", { headers: { Cookie: cookie } });
+      resultados.push(comCookie.status);
+    }
+
+    const acertos = resultados.filter((s) => s === 200).length;
+    console.log(`  sessão por cookie: ${acertos}/${TENTATIVAS} -> ${resultados.join(" ")}`);
+
+    if (acertos !== TENTATIVAS) {
       throw new Error(
-        `/barbershop devia responder 200 com sessão por cookie, respondeu ${comCookie.status}` +
-          " — verifique se a tabela `session` existe no banco",
+        `sessão por cookie falhou ${TENTATIVAS - acertos} de ${TENTATIVAS} vezes. ` +
+          "Se a falha é intermitente, a resposta do login está saindo antes da sessão ser gravada " +
+          "(ver saveSession em routes/auth.ts). Se falha sempre, verifique se a tabela `session` existe.",
       );
     }
 
