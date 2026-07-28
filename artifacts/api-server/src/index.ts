@@ -1,4 +1,5 @@
 import app from "./app";
+import { runMigrations } from "@workspace/db/migrate";
 import { logger } from "./lib/logger";
 
 const rawPort = process.env["PORT"];
@@ -49,11 +50,39 @@ if (process.env.MERCADOPAGO_ACCESS_TOKEN) {
   logger.info("MERCADOPAGO_ACCESS_TOKEN ausente: rotas de pagamento inativas");
 }
 
-app.listen(port, (err) => {
-  if (err) {
-    logger.error({ err }, "Error listening on port");
-    process.exit(1);
+/**
+ * Migrações antes de aceitar requisições.
+ *
+ * O Railway não tem etapa de release separada. Aplicar depois de abrir a porta
+ * significaria servir, por alguns segundos, código que espera uma coluna que
+ * ainda não existe — e o erro apareceria como 500 para quem estivesse usando,
+ * não como falha de deploy.
+ *
+ * Falhar aqui derruba a subida de propósito: um deploy que não conseguiu migrar
+ * não deve receber tráfego. O Railway mantém a versão anterior no ar quando a
+ * nova não sobe, então o efeito é o certo — o serviço continua funcionando com o
+ * schema que combina com o código que está rodando.
+ */
+async function iniciar(): Promise<void> {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL environment variable is required.");
   }
 
-  logger.info({ port }, "Server listening");
+  logger.info("Aplicando migrações pendentes");
+  await runMigrations(process.env.DATABASE_URL);
+  logger.info("Migrações em dia");
+
+  app.listen(port, (err) => {
+    if (err) {
+      logger.error({ err }, "Error listening on port");
+      process.exit(1);
+    }
+
+    logger.info({ port }, "Server listening");
+  });
+}
+
+iniciar().catch((err: unknown) => {
+  logger.error({ err }, "Falha ao iniciar — migração não aplicada, servidor não subiu");
+  process.exit(1);
 });

@@ -20,6 +20,10 @@ export default defineConfig({
   // drizzle-kit resolves this as a glob pattern, which requires forward
   // slashes even on Windows — path.join alone would emit backslashes here.
   schema: path.join(__dirname, "./src/schema/index.ts").split(path.sep).join("/"),
+  // Migrações versionadas ficam aqui e são commitadas. Antes o único caminho de
+  // schema era `drizzle-kit push`, que compara com o banco vivo e aplica a
+  // diferença na hora: funcionava, mas sem histórico, sem revisão e sem volta.
+  out: path.join(__dirname, "./migrations").split(path.sep).join("/"),
   dialect: "postgresql",
   dbCredentials: {
     url: process.env.DATABASE_URL,

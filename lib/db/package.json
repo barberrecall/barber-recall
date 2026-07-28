@@ -6,11 +6,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./schema": "./src/schema/index.ts",
-    "./guard": "./src/guard.ts"
+    "./guard": "./src/guard.ts",
+    "./migrate": "./src/migrate.ts"
   },
   "scripts": {
-    "push": "tsx ./src/assert-dev-db.ts \"drizzle-kit push\" && drizzle-kit push --config ./drizzle.config.ts",
-    "push-force": "tsx ./src/assert-dev-db.ts \"drizzle-kit push --force\" && drizzle-kit push --force --config ./drizzle.config.ts"
+    "generate": "drizzle-kit generate --config ./drizzle.config.ts"
   },
   "dependencies": {
     "drizzle-orm": "catalog:",

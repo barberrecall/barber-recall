@@ -1,11 +1,13 @@
 /**
  * Trava que impede um comando destrutivo de rodar contra o banco de produção.
  *
- * O projeto não tem migrações versionadas: o único caminho de schema é
- * `drizzle-kit push`, que compara o schema em TypeScript com o banco vivo e
- * aplica a diferença na hora — e `push-force` chega a derrubar colunas. Com a
- * URL errada no `.env`, um `push` de rotina reescreve produção sem revisão e
- * sem histórico.
+ * Usada pelos scripts que criam e apagam dados durante verificação
+ * (check:paywall, check:webhook). Com a URL errada no `.env`, um desses scripts
+ * mexeria em produção sem ninguém pedir.
+ *
+ * Schema saiu do alcance dela quando o `drizzle-kit push` foi aposentado em
+ * favor de migrações versionadas: hoje o schema muda por arquivo commitado e
+ * revisado, aplicado na subida do servidor.
  *
  * ── Por que a trava é por allowlist, e não por denylist ─────────────────────
  *

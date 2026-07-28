@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
-import { rm, copyFile } from "node:fs/promises";
+import { rm, copyFile, cp } from "node:fs/promises";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -133,6 +133,20 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     "table.sql",
   );
   await copyFile(origem, path.join(distDir, "table.sql"));
+
+  // Mesma armadilha, outra vítima: `runMigrations` resolve a pasta de migrações
+  // a partir de `import.meta.dirname`. No código-fonte isso aponta para
+  // lib/db/migrations; empacotado, o índice vive em artifacts/api-server/dist,
+  // e o `..` cai em artifacts/api-server. Copiar para lá faz os dois caminhos
+  // acertarem o mesmo lugar, sem o módulo precisar saber se está empacotado.
+  //
+  // Sem isto o servidor sobe, não encontra migração nenhuma, conclui que está
+  // tudo aplicado e serve tráfego com o schema errado — falha silenciosa, que é
+  // a pior forma desta em particular.
+  const migracoesOrigem = path.resolve(artifactDir, "..", "..", "lib", "db", "migrations");
+  const migracoesDestino = path.resolve(artifactDir, "migrations");
+  await rm(migracoesDestino, { recursive: true, force: true });
+  await cp(migracoesOrigem, migracoesDestino, { recursive: true });
 }
 
 buildAll().catch((err) => {
