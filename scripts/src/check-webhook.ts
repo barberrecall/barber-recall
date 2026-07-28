@@ -98,7 +98,38 @@ async function main(): Promise<void> {
   const passou = statusValido !== 401;
   if (!passou) falhas++;
   console.log(
-    `  ${passou ? "ok  " : "FALHA"}  assinatura legítima passa da porta  (obtido ${statusValido}, esperado ≠ 401)`,
+    `  ${passou ? "ok  " : "FALHA"}  assinatura legítima em ms passa  (obtido ${statusValido}, esperado ≠ 401)`,
+  );
+
+  /*
+   * O Mercado Pago envia `ts` em segundos, não em milissegundos. O
+   * `toleranceSeconds` do SDK compara o valor cru com Date.now(), o que dá uma
+   * deriva de mais de cinquenta anos e reprova toda notificação real — a
+   * proteção teria bloqueado 100% dos pagamentos, e nenhum teste sintético
+   * pegou isso porque todos assinavam em milissegundos.
+   *
+   * Este caso existe para que a unidade volte a ser exercitada, e não só a
+   * conveniente.
+   */
+  const tsSegundos = String(Math.floor(Date.now() / 1000));
+  const statusSegundos = await chamar(dataId, {
+    "x-signature": `ts=${tsSegundos},v1=${assinar(dataId, requestId, tsSegundos)}`,
+    "x-request-id": requestId,
+  });
+  const passouSegundos = statusSegundos !== 401;
+  if (!passouSegundos) falhas++;
+  console.log(
+    `  ${passouSegundos ? "ok  " : "FALHA"}  assinatura legítima em SEGUNDOS passa  (obtido ${statusSegundos}, esperado ≠ 401)`,
+  );
+
+  const tsSegundosVelho = String(Math.floor(Date.now() / 1000) - 600);
+  conferir(
+    "em segundos, porém antiga (replay tardio)",
+    await chamar(dataId, {
+      "x-signature": `ts=${tsSegundosVelho},v1=${assinar(dataId, requestId, tsSegundosVelho)}`,
+      "x-request-id": requestId,
+    }),
+    401,
   );
 
   console.log("\nporta de trás — idempotência:");

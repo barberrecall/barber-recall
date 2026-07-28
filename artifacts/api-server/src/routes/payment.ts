@@ -172,6 +172,26 @@ router.get("/payment/pix-status/:paymentId", async (req, res): Promise<void> => 
  * ambiente onde ela custa dinheiro. O aviso no start (ver index.ts) existe para
  * que isso apareça antes de alguém tentar pagar, e não depois.
  */
+const TOLERANCIA_SEGUNDOS = 300;
+
+/**
+ * Converte o `ts` da assinatura para milissegundos.
+ *
+ * O Mercado Pago envia epoch em **segundos**; o `toleranceSeconds` do SDK
+ * compara o valor cru com `Date.now()`, que é milissegundos. A conta dá uma
+ * deriva de mais de cinquenta anos e a janela reprova sempre — foi o que a
+ * notificação simulada mostrou, com `TimestampOutOfTolerance` num servidor cujo
+ * relógio estava a três segundos do certo.
+ *
+ * Aceita as duas unidades em vez de assumir segundos: se o Mercado Pago mudar
+ * para milissegundos, ou se o SDK passar a normalizar, isto continua correto.
+ * Epoch em segundos tem 10 dígitos até 2286; em milissegundos, 13.
+ */
+function tsParaMs(ts: string): number {
+  const n = Number(ts);
+  return ts.length <= 11 ? n * 1000 : n;
+}
+
 function webhookAutentico(req: Request): { ok: true } | { ok: false; motivo: string } {
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
 
@@ -180,21 +200,39 @@ function webhookAutentico(req: Request): { ok: true } | { ok: false; motivo: str
   }
 
   try {
+    // Sem `toleranceSeconds`: aqui o SDK só confere o HMAC, que é a parte que
+    // ele faz certo — inclusive a comparação em tempo constante. A janela de
+    // tempo é conferida abaixo, com a unidade corrigida.
     WebhookSignatureValidator.validate({
       xSignature: req.headers["x-signature"],
       xRequestId: req.headers["x-request-id"],
       dataId: req.query["data.id"] as string | undefined,
       secret,
-      // Janela curta: uma notificação legítima chega em segundos. Sem limite de
-      // tempo, uma assinatura válida capturada hoje valeria para sempre.
-      toleranceSeconds: 300,
     });
-    return { ok: true };
   } catch (err) {
     const motivo =
       err instanceof InvalidWebhookSignatureError ? err.reason : "erro inesperado na validação";
     return { ok: false, motivo };
   }
+
+  // Assinatura válida capturada hoje não pode valer para sempre: sem janela de
+  // tempo, quem interceptar uma notificação legítima pode reenviá-la meses
+  // depois. A idempotência cobre o reenvio da MESMA notificação; a janela cobre
+  // o uso tardio de uma assinatura ainda não vista por nós.
+  const ts = String(req.headers["x-signature"] ?? "").match(/ts=([^,]+)/)?.[1]?.trim();
+
+  if (!ts) return { ok: false, motivo: "assinatura sem ts" };
+
+  const derivaSegundos = Math.round(Math.abs(Date.now() - tsParaMs(ts)) / 1000);
+
+  if (derivaSegundos > TOLERANCIA_SEGUNDOS) {
+    return {
+      ok: false,
+      motivo: `notificação fora da janela (${derivaSegundos}s de deriva, limite ${TOLERANCIA_SEGUNDOS}s)`,
+    };
+  }
+
+  return { ok: true };
 }
 
 // POST /payment/webhook — public, called by Mercado Pago
