@@ -11,6 +11,7 @@ import { Settings, Save, MessageCircle, Store } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChangeLoginEmailCard } from "@/components/change-login-email-card";
 
 const settingsSchema = z.object({
   nome: z.string().min(2),
@@ -104,7 +105,21 @@ export default function SettingsPage() {
                 <FormItem><FormLabel>Telefone Principal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="email" render={({ field }) => (
-                <FormItem><FormLabel>Email de Contato</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>E-mail da barbearia (cobrança e contato)</FormLabel>
+                  <FormControl><Input type="email" {...field} /></FormControl>
+                  {/*
+                    Este campo já se chamou só "Email de Contato", e a conta tem
+                    outro e-mail — o de login. Alguém trocou este achando que
+                    trocava aquele e ficou sem conseguir entrar. O rótulo diz o
+                    que este faz, e a nota diz onde está o outro.
+                  */}
+                  <p className="text-xs text-muted-foreground">
+                    Vai nas cobranças do Mercado Pago. Não é o e-mail que você usa para entrar —
+                    esse fica em <strong>Conta</strong>, abaixo.
+                  </p>
+                  <FormMessage />
+                </FormItem>
               )} />
               <FormField control={form.control} name="cidade" render={({ field }) => (
                 <FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -186,6 +201,18 @@ export default function SettingsPage() {
           </div>
         </form>
       </Form>
+
+      {/*
+        Fora do formulário da barbearia de propósito. São submissões
+        independentes — e <form> dentro de <form> é HTML inválido, com o
+        efeito prático de o botão de um disparar o outro.
+
+        O espaço embaixo evita que a barra fixa de "Salvar" cubra o botão
+        deste cartão, que é o último elemento da página.
+      */}
+      <div className="mt-6 mb-28 md:mb-24">
+        <ChangeLoginEmailCard />
+      </div>
     </div>
   );
 }

@@ -17,6 +17,22 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * Exige a senha atual. O e-mail de login é diferente do e-mail de contato da barbearia (`PATCH /barbershop`): aquele identifica quem entra, este aparece nas cobranças. Trocar um não muda o outro.
+ * @summary Troca o e-mail de login da conta
+ */
+export const ChangeLoginEmailBody = zod.object({
+  "novoEmail": zod.string(),
+  "senha": zod.string().describe('Senha atual. Sem ela, uma sessão roubada trocaria o e-mail e tomaria a conta.')
+})
+
+export const ChangeLoginEmailResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string().describe('E-mail de login. Não confundir com `Barbershop.email`, que é o de contato.'),
+  "nome": zod.string()
+})
+
+
+/**
  * @summary Get barbershop settings
  */
 export const GetBarbershopResponse = zod.object({

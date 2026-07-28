@@ -176,4 +176,82 @@ router.get("/auth/me", async (req, res): Promise<void> => {
   res.json({ user, barbershopId: req.session.barbershopId });
 });
 
+/**
+ * PATCH /auth/email — troca o e-mail de login.
+ *
+ * Existe porque não existia: a conta nascia com um e-mail e não havia tela
+ * nenhuma para mudá-lo. Quem quisesse corrigir um erro de digitação no cadastro
+ * ficava preso a ele para sempre.
+ *
+ * Some com a confusão que isso gerava? Não sozinho — o CRM também tem um "e-mail
+ * de contato" na barbearia, que é o que vai para o Mercado Pago. São coisas
+ * diferentes e continuam sendo; o que muda é que agora as duas são editáveis e
+ * cada tela diz qual está mexendo.
+ *
+ * Exige a senha atual de propósito. Trocar o e-mail de login é o passo final de
+ * um roubo de conta: quem tiver uma sessão ativa emprestada — um navegador
+ * esquecido aberto — trocaria o e-mail, pediria "esqueci a senha" e o dono
+ * perderia o acesso sem nunca ter digitado nada.
+ */
+router.patch("/auth/email", async (req, res): Promise<void> => {
+  if (!req.session?.userId) {
+    res.status(401).json({ error: "Não autenticado." });
+    return;
+  }
+
+  const { novoEmail, senha } = req.body as { novoEmail?: string; senha?: string };
+
+  if (!novoEmail || !senha) {
+    res.status(400).json({ error: "E-mail e senha são obrigatórios." });
+    return;
+  }
+
+  const email = novoEmail.toLowerCase().trim();
+
+  // Validação simples e deliberada: o objetivo é barrar erro de digitação, não
+  // provar que a caixa existe. Nada é enviado para este endereço hoje.
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    res.status(400).json({ error: "E-mail inválido." });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId));
+
+  if (!user) {
+    res.status(401).json({ error: "Sessão inválida." });
+    return;
+  }
+
+  const senhaConfere = await bcrypt.compare(senha, user.passwordHash);
+
+  if (!senhaConfere) {
+    res.status(401).json({ error: "Senha incorreta." });
+    return;
+  }
+
+  if (email === user.email) {
+    // Não é erro: o usuário salvou sem mudar nada.
+    res.json({ id: user.id, email: user.email, nome: user.nome });
+    return;
+  }
+
+  const [emUso] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(eq(usersTable.email, email));
+
+  if (emUso) {
+    res.status(400).json({ error: "Este e-mail já está em uso." });
+    return;
+  }
+
+  const [atualizado] = await db
+    .update(usersTable)
+    .set({ email })
+    .where(eq(usersTable.id, user.id))
+    .returning({ id: usersTable.id, email: usersTable.email, nome: usersTable.nome });
+
+  res.json(atualizado);
+});
+
 export default router;

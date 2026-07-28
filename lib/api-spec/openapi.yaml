@@ -47,6 +47,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
+  # ─── Conta ──────────────────────────────────────────────────────────────────
+  /auth/email:
+    patch:
+      operationId: changeLoginEmail
+      tags: [auth]
+      summary: Troca o e-mail de login da conta
+      description: >
+        Exige a senha atual. O e-mail de login é diferente do e-mail de contato
+        da barbearia (`PATCH /barbershop`): aquele identifica quem entra, este
+        aparece nas cobranças. Trocar um não muda o outro.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeLoginEmailInput"
+      responses:
+        "200":
+          description: E-mail de login atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "400":
+          description: E-mail inválido ou já em uso
+        "401":
+          description: Senha incorreta
+
   # ─── Barbershop ─────────────────────────────────────────────────────────────
   /barbershop:
     get:
@@ -795,6 +823,29 @@ components:
       properties:
         status:
           type: string
+
+    # ─── Conta ──────────────────────────────────────────────────────
+    AuthUser:
+      type: object
+      required: [id, email, nome]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          description: E-mail de login. Não confundir com `Barbershop.email`, que é o de contato.
+        nome:
+          type: string
+
+    ChangeLoginEmailInput:
+      type: object
+      required: [novoEmail, senha]
+      properties:
+        novoEmail:
+          type: string
+        senha:
+          type: string
+          description: Senha atual. Sem ela, uma sessão roubada trocaria o e-mail e tomaria a conta.
 
     # ─── Barbershop ─────────────────────────────────────────────────
     Barbershop:

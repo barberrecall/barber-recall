@@ -24,6 +24,7 @@ import type {
   Appointment,
   AppointmentInput,
   AppointmentUpdate,
+  AuthUser,
   Barber,
   BarberInput,
   BarberUpdate,
@@ -32,6 +33,7 @@ import type {
   Campaign,
   CampaignInput,
   CampaignUpdate,
+  ChangeLoginEmailInput,
   Client,
   ClientDataPoint,
   ClientInput,
@@ -162,6 +164,77 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
 
 
 
+
+export const getChangeLoginEmailUrl = () => {
+
+
+
+
+  return `/api/auth/email`
+}
+
+/**
+ * Exige a senha atual. O e-mail de login é diferente do e-mail de contato da barbearia (`PATCH /barbershop`): aquele identifica quem entra, este aparece nas cobranças. Trocar um não muda o outro.
+ * @summary Troca o e-mail de login da conta
+ */
+export const changeLoginEmail = async (changeLoginEmailInput: ChangeLoginEmailInput, options?: RequestInit): Promise<AuthUser> => {
+
+  return customFetch<AuthUser>(getChangeLoginEmailUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(changeLoginEmailInput)
+  }
+);}
+
+
+
+
+export const getChangeLoginEmailMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeLoginEmail>>, TError,{data: BodyType<ChangeLoginEmailInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changeLoginEmail>>, TError,{data: BodyType<ChangeLoginEmailInput>}, TContext> => {
+
+const mutationKey = ['changeLoginEmail'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeLoginEmail>>, {data: BodyType<ChangeLoginEmailInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  changeLoginEmail(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangeLoginEmailMutationResult = NonNullable<Awaited<ReturnType<typeof changeLoginEmail>>>
+    export type ChangeLoginEmailMutationBody = BodyType<ChangeLoginEmailInput>
+    export type ChangeLoginEmailMutationError = ErrorType<void>
+
+    /**
+ * @summary Troca o e-mail de login da conta
+ */
+export const useChangeLoginEmail = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeLoginEmail>>, TError,{data: BodyType<ChangeLoginEmailInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof changeLoginEmail>>,
+        TError,
+        {data: BodyType<ChangeLoginEmailInput>},
+        TContext
+      > => {
+      return useMutation(getChangeLoginEmailMutationOptions(options));
+    }
 
 export const getGetBarbershopUrl = () => {
 

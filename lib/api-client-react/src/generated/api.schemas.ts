@@ -9,6 +9,19 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface AuthUser {
+  id: number;
+  /** E-mail de login. Não confundir com `Barbershop.email`, que é o de contato. */
+  email: string;
+  nome: string;
+}
+
+export interface ChangeLoginEmailInput {
+  novoEmail: string;
+  /** Senha atual. Sem ela, uma sessão roubada trocaria o e-mail e tomaria a conta. */
+  senha: string;
+}
+
 export type BarbershopPlan = typeof BarbershopPlan[keyof typeof BarbershopPlan];
 
 
