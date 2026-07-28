@@ -16,6 +16,41 @@ const client = new MercadoPagoConfig({
   accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN ?? "",
 });
 
+/**
+ * Extrai a mensagem de erro do Mercado Pago.
+ *
+ * O SDK lança objeto simples, não `Error` — então `err instanceof Error` é
+ * falso e o código caía sempre na mensagem genérica. Na prática isso significou
+ * responder "Erro ao gerar PIX." quando o servidor sabia que a causa era
+ * "payer.email must be a valid email": a informação existia e era descartada
+ * na última linha, obrigando a ir no log do servidor para descobrir algo que o
+ * usuário podia ter lido na tela.
+ *
+ * As mensagens do Mercado Pago são de validação de campo e podem ser mostradas
+ * — não carregam credencial nem dado de terceiro.
+ */
+function mensagemDoErro(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message) return err.message;
+
+  if (typeof err === "object" && err !== null) {
+    const e = err as { message?: unknown; cause?: unknown };
+
+    if (typeof e.message === "string" && e.message) return e.message;
+
+    // `cause` vem como lista de problemas por campo; a primeira descrição é a
+    // acionável.
+    if (Array.isArray(e.cause)) {
+      const primeira = e.cause.find(
+        (c): c is { description: string } =>
+          typeof c === "object" && c !== null && typeof (c as { description?: unknown }).description === "string",
+      );
+      if (primeira) return primeira.description;
+    }
+  }
+
+  return fallback;
+}
+
 const baseUrl = process.env.APP_URL
   ? `https://${process.env.APP_URL}`
   : `https://${process.env.REPLIT_DEV_DOMAIN}`;
@@ -54,8 +89,7 @@ router.post("/payment/create-checkout", async (req, res): Promise<void> => {
     res.json({ init_point: result.init_point, preapproval_id: result.id });
   } catch (err: unknown) {
     logger.error({ err }, "Erro ao criar checkout Mercado Pago");
-    const message = err instanceof Error ? err.message : "Erro ao criar checkout.";
-    res.status(500).json({ error: message });
+    res.status(500).json({ error: mensagemDoErro(err, "Erro ao criar checkout.") });
   }
 });
 
@@ -96,8 +130,7 @@ router.post("/payment/create-pix", async (req, res): Promise<void> => {
     });
   } catch (err: unknown) {
     logger.error({ err }, "Erro ao criar PIX Mercado Pago");
-    const message = err instanceof Error ? err.message : "Erro ao gerar PIX.";
-    res.status(500).json({ error: message });
+    res.status(500).json({ error: mensagemDoErro(err, "Erro ao gerar PIX.") });
   }
 });
 
@@ -120,8 +153,7 @@ router.get("/payment/pix-status/:paymentId", async (req, res): Promise<void> => 
 
     res.json({ status: payment.status, statusDetail: payment.status_detail });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Erro ao consultar status.";
-    res.status(500).json({ error: message });
+    res.status(500).json({ error: mensagemDoErro(err, "Erro ao consultar status.") });
   }
 });
 
