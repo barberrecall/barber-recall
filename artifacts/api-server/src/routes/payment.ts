@@ -240,8 +240,25 @@ router.post("/payment/webhook", async (req, res): Promise<void> => {
   const autentico = webhookAutentico(req);
 
   if (!autentico.ok) {
+    // O que foi recusado importa tanto quanto o fato da recusa. Um pagamento
+    // real trouxe rajadas em que parte das notificações validava e parte dava
+    // SignatureMismatch, e o log de então não permitia distinguir se o que
+    // caía era ruído do Mercado Pago ou evento legítimo sendo descartado em
+    // silêncio — que é como uma renovação de assinatura sumiria sem deixar
+    // rastro.
+    //
+    // A query inteira entra porque as notificações antigas do Mercado Pago
+    // usam `topic` e `id` em vez de `data.id`, e é justamente essa diferença
+    // que mudaria o manifesto assinado.
     logger.warn(
-      { motivo: autentico.motivo, requestId: req.headers["x-request-id"] },
+      {
+        motivo: autentico.motivo,
+        requestId: req.headers["x-request-id"],
+        query: req.query,
+        tipo: (req.body as { type?: string; topic?: string } | undefined)?.type,
+        topic: (req.body as { type?: string; topic?: string } | undefined)?.topic,
+        temAssinatura: Boolean(req.headers["x-signature"]),
+      },
       "Webhook do Mercado Pago recusado",
     );
     // 401, e não 200: aqui não é retentativa do MP que se quer evitar, é
@@ -334,6 +351,18 @@ router.post("/payment/webhook", async (req, res): Promise<void> => {
           }
         }
       }
+    }
+
+    // Notificação autêntica cujo `type` não casa com nenhum tratamento acima
+    // sai daqui com 200 e sem deixar rastro. É assim que
+    // `subscription_authorized_payment` — o evento das cobranças mensais
+    // seguintes de assinatura por cartão — passaria despercebido, e o barbeiro
+    // pagaria o segundo mês sem receber os 30 dias.
+    if (type !== "payment" && type !== "subscription_preapproval") {
+      logger.warn(
+        { type, dataId: data?.id },
+        "Webhook autêntico de tipo não tratado — nenhum plano foi estendido",
+      );
     }
 
     res.sendStatus(200);
