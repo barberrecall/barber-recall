@@ -26,19 +26,29 @@ router.use(authRouter);
 router.use(paymentRouter); // webhook endpoint is public; checkout is auth-guarded inside
 router.use(adminAuthRouter); // admin login/logout/me — no user account required
 
+/**
+ * Painel de super admin.
+ *
+ * Fica antes do `requireAuth` porque tem guarda própria: `admin.ts` aplica
+ * `adminOnly` a todo o prefixo `/admin`, e nenhuma rota dali lê
+ * `req.session.barbershopId`.
+ *
+ * Enquanto estava depois, o painel não funcionava: `POST /admin/login`
+ * respondia `authenticated: true`, `GET /admin/me` confirmava, e toda rota de
+ * dados devolvia 401 — porque `requireAuth` exige sessão de barbearia, e um
+ * super admin não é dono de barbearia nenhuma. A única forma de ver o painel
+ * era estar logado nas duas coisas ao mesmo tempo, no mesmo navegador.
+ */
+router.use(adminRouter);
+
 // All routes below require authentication
 router.use(requireAuth);
 
 // Autenticado, mas sem exigir assinatura em dia.
 //
 // `/barbershop` é como o cliente descobre que expirou — bloqueá-lo daria um
-// erro genérico no lugar da tela que explica o que houve. O painel de super
-// admin passa por `requireAuth` (portanto tem sessão de barbearia própria), e o
-// estado da assinatura dessa barbearia não pode derrubar a administração das
-// outras. Ordem entre routers não afeta o casamento de rotas — os caminhos não
-// colidem —, só define o que fica antes do portão.
+// erro genérico no lugar da tela que explica o que houve.
 router.use(barbershopRouter);
-router.use(adminRouter); // adminOnly é aplicado dentro do router
 
 // Daqui para baixo, assinatura em dia. Ver middleware/requireActiveSubscription.
 router.use(requireActiveSubscription);

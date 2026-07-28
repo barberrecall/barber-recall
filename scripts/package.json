@@ -9,14 +9,17 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "icons": "tsx ./src/make-icons.ts",
     "check:paywall": "tsx --env-file-if-exists=../.env ./src/check-paywall.ts",
-    "check:webhook": "tsx --env-file-if-exists=../.env ./src/check-webhook.ts"
+    "check:webhook": "tsx --env-file-if-exists=../.env ./src/check-webhook.ts",
+    "hash:admin": "tsx ./src/hash-admin-password.ts"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "tsx": "catalog:"
   },
   "dependencies": {
+    "@types/bcryptjs": "^3.0.0",
     "@workspace/db": "workspace:*",
+    "bcryptjs": "^3.0.3",
     "drizzle-orm": "catalog:"
   }
 }
