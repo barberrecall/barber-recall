@@ -55,9 +55,17 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
   .filter(Boolean);
 
 if (process.env.NODE_ENV === "production" && allowedOrigins.length === 0) {
-  logger.warn(
-    "ALLOWED_ORIGINS não definida em produção: nenhuma origem de navegador será aceita. " +
-      "O app móvel continua funcionando; defina a variável para liberar o CRM web.",
+  // Informativo, não alerta: desde que o CRM web passou a ser servido por este
+  // mesmo processo, a lista vazia é o estado correto e esperado. Navegador não
+  // aplica CORS a requisição de mesma origem, então a ausência da variável não
+  // bloqueia nada. Enquanto isto era um WARN dizendo "defina para liberar o CRM
+  // web", mandava configurar o que não estava quebrado.
+  //
+  // Volta a importar se algum dia o front for servido de outro host — um
+  // domínio próprio apontando para outro lugar, por exemplo.
+  logger.info(
+    "ALLOWED_ORIGINS não definida: só requisições de mesma origem são aceitas no navegador. " +
+      "É o esperado enquanto o CRM web é servido por este processo.",
   );
 }
 
