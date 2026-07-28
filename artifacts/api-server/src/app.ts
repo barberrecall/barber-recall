@@ -97,7 +97,14 @@ const sessionMiddleware = session({
   store: new PgStore({
     conString: process.env.DATABASE_URL,
     tableName: "session",
-    createTableIfMissing: false, // already created in migration
+    // O comentário anterior dizia "already created in migration". Não há
+    // migrações neste repositório — o único caminho de schema é
+    // `drizzle-kit push`, e a tabela `session` não está no schema do drizzle
+    // porque quem a gerencia é o connect-pg-simple. Na prática ela nunca foi
+    // criada aqui, e o efeito ficou escondido: o app móvel usa token Bearer e
+    // não toca em sessão, e o CRM web só foi publicado hoje. O login respondia
+    // 200 mesmo sem conseguir gravar, e a requisição seguinte quebrava com 500.
+    createTableIfMissing: true,
   }),
   secret: process.env.SESSION_SECRET ?? "dev-only-insecure-secret-do-not-use-in-production",
   resave: false,

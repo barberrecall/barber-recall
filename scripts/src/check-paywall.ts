@@ -71,6 +71,39 @@ async function main(): Promise<void> {
       throw new Error(`/clients devia responder 200 com trial ativo, respondeu ${comTrialAtivo.status}`);
     }
 
+    /*
+     * O mesmo, pelo caminho do navegador.
+     *
+     * São dois mecanismos de autenticação diferentes — token Bearer no app,
+     * cookie de sessão no CRM web — e o cookie depende de uma tabela `session`
+     * que o connect-pg-simple mantém fora do schema do drizzle. Essa tabela
+     * nunca existiu neste banco, e ninguém percebeu: o app não toca em sessão,
+     * o CRM web só foi publicado depois, e todo teste automatizado daqui usava
+     * Bearer. O sintoma foi 500 em toda tela do CRM.
+     *
+     * Testar só o caminho conveniente é como esse tipo de falha sobrevive.
+     */
+    const loginWeb = await fetch(`${BASE}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, senha }),
+    });
+    const cookie = loginWeb.headers
+      .getSetCookie()
+      .map((c) => c.split(";")[0])
+      .join("; ");
+
+    if (!cookie) throw new Error("login por cookie não devolveu Set-Cookie");
+
+    const comCookie = await api("barbershop", { headers: { Cookie: cookie } });
+    console.log(`  sessão por cookie: /barbershop -> HTTP ${comCookie.status}`);
+    if (comCookie.status !== 200) {
+      throw new Error(
+        `/barbershop devia responder 200 com sessão por cookie, respondeu ${comCookie.status}` +
+          " — verifique se a tabela `session` existe no banco",
+      );
+    }
+
     // Recua o início do trial muito além de qualquer janela plausível. Só nesta
     // barbearia. Um número grande em vez de TRIAL_DAYS + 1 de propósito: assim o
     // teste não guarda uma cópia da duração do trial que envelhece calada no dia

@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
-import { rm } from "node:fs/promises";
+import { rm, copyFile } from "node:fs/promises";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -118,6 +118,21 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     `,
     },
   });
+
+  // O `connect-pg-simple` cria a tabela de sessões lendo um `table.sql` que
+  // fica ao lado do próprio índice. Empacotado, `__dirname` passa a ser `dist/`
+  // e a leitura falha com ENOENT — mesma armadilha que a lista de `external`
+  // acima já descreve para pacotes que atravessam caminho para ler arquivos.
+  //
+  // Copiar em vez de reescrever o DDL à mão: assim o schema da tabela continua
+  // sendo o do próprio pacote, e uma mudança dele não deixa uma cópia nossa
+  // desatualizada em silêncio.
+  const require_ = createRequire(import.meta.url);
+  const origem = path.join(
+    path.dirname(require_.resolve("connect-pg-simple")),
+    "table.sql",
+  );
+  await copyFile(origem, path.join(distDir, "table.sql"));
 }
 
 buildAll().catch((err) => {
