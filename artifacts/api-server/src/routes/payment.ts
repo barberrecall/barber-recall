@@ -4,6 +4,7 @@ import {
   MercadoPagoConfig,
   PreApproval,
   Payment as MpPayment,
+  Invoice,
   WebhookSignatureValidator,
   InvalidWebhookSignatureError,
 } from "mercadopago";
@@ -286,6 +287,23 @@ router.post("/payment/webhook", async (req, res): Promise<void> => {
      * acontece quando nossa resposta demora — ela chega com assinatura válida e
      * mesmo assim não pode conceder tempo de novo.
      */
+    /*
+     * Chave de um mês de assinatura, e não da notificação que o anunciou.
+     *
+     * Autorizar uma assinatura dispara `subscription_preapproval`; a cobrança
+     * daquele mesmo mês chega como `subscription_authorized_payment`. São duas
+     * notificações com ids diferentes falando do mesmo mês pago — deduplicar
+     * por id concederia 60 dias por 30 dias de dinheiro.
+     *
+     * Amarrando a chave à assinatura e ao mês, a segunda notificação vira
+     * repetição e é ignorada, enquanto o mês seguinte gera chave nova e é
+     * concedido normalmente. Isso também dispensa saber se o Mercado Pago
+     * dispara `subscription_authorized_payment` já na primeira cobrança ou só
+     * da segunda em diante: funciona nas duas hipóteses.
+     */
+    const chaveDoPeriodo = (preapprovalId: string, quando: Date): string =>
+      `${preapprovalId}:${quando.toISOString().slice(0, 7)}`;
+
     const registrarSeInedita = async (
       tipo: string,
       externalId: string,
@@ -320,7 +338,11 @@ router.post("/payment/webhook", async (req, res): Promise<void> => {
         : null;
 
       if (shopId && subscription.status === "authorized") {
-        const inedita = await registrarSeInedita(type, String(subscription.id), shopId);
+        const inedita = await registrarSeInedita(
+          "subscription_period",
+          chaveDoPeriodo(String(subscription.id), new Date()),
+          shopId,
+        );
         if (inedita) {
           const planExpiresAt = await computeNewExpiry(shopId);
           await db
@@ -329,6 +351,87 @@ router.post("/payment/webhook", async (req, res): Promise<void> => {
             .where(eq(barbershopTable.id, shopId));
         } else {
           logger.info({ preapprovalId: subscription.id, shopId }, "Assinatura já processada, ignorando");
+        }
+      }
+    }
+
+    /*
+     * Cobranças mensais seguintes de uma assinatura por cartão.
+     *
+     * `subscription_preapproval` avisa que a assinatura foi autorizada — isso
+     * acontece uma vez. Cada renovação depois disso chega como
+     * `subscription_authorized_payment`, com o id de uma "fatura"
+     * (authorized_payment), não de um pagamento comum. Sem este tratamento a
+     * notificação entrava, não casava com nenhuma condição e saía com 200 em
+     * silêncio: o barbeiro pagava o segundo mês e não recebia os 30 dias.
+     *
+     * O dono é resolvido em dois passos porque o `external_reference` da fatura
+     * é opcional na resposta do Mercado Pago. Quando vem, usamos; quando não
+     * vem, buscamos a assinatura que a gerou, onde ele foi gravado na criação.
+     * Depender só do primeiro caminho faria a renovação falhar de um jeito que
+     * só apareceria 30 dias depois de vender.
+     */
+    if (type === "subscription_authorized_payment") {
+      const invoiceClient = new Invoice(client);
+      const fatura = await invoiceClient.get({ id: data?.id ?? "" });
+
+      // Duas fontes de verdade para "foi pago": o status da fatura e o do
+      // pagamento dentro dela. Exigir as duas evitaria conceder por uma fatura
+      // apenas agendada; aceitar qualquer uma cobre a diferença de vocabulário
+      // entre os dois campos.
+      const pago = fatura.status === "processed" || fatura.payment?.status === "approved";
+
+      let shopId: number | null = null;
+
+      if (fatura.external_reference) {
+        const n = parseInt(fatura.external_reference, 10);
+        if (!isNaN(n)) shopId = n;
+      }
+
+      if (shopId === null && fatura.preapproval_id) {
+        const assinatura = await new PreApproval(client).get({ id: fatura.preapproval_id });
+        const n = parseInt(assinatura.external_reference ?? "", 10);
+        if (!isNaN(n)) shopId = n;
+      }
+
+      if (!pago) {
+        logger.info(
+          { faturaId: fatura.id, status: fatura.status, statusPagamento: fatura.payment?.status },
+          "Fatura de assinatura ainda não paga, nada a conceder",
+        );
+      } else if (shopId === null) {
+        // Dinheiro entrou e não sabemos de quem. Precisa ser alto no log: só
+        // uma intervenção manual resolve, e o barbeiro vai reclamar antes.
+        logger.error(
+          { faturaId: fatura.id, preapprovalId: fatura.preapproval_id },
+          "Fatura paga sem external_reference resolvível — plano NÃO estendido",
+        );
+      } else if (!fatura.preapproval_id) {
+        logger.error(
+          { faturaId: fatura.id, shopId },
+          "Fatura paga sem preapproval_id — não é possível deduplicar o período, plano NÃO estendido",
+        );
+      } else {
+        // O mês vem da data de débito da fatura, não de agora: uma notificação
+        // atrasada ou reprocessada precisa cair no mês que ela cobrou.
+        const quando = fatura.debit_date ? new Date(fatura.debit_date) : new Date();
+        const inedita = await registrarSeInedita(
+          "subscription_period",
+          chaveDoPeriodo(fatura.preapproval_id, quando),
+          shopId,
+        );
+        if (inedita) {
+          const planExpiresAt = await computeNewExpiry(shopId);
+          await db
+            .update(barbershopTable)
+            .set({ plan: "pro", planExpiresAt })
+            .where(eq(barbershopTable.id, shopId));
+          logger.info(
+            { faturaId: fatura.id, shopId, planExpiresAt },
+            "Renovação de assinatura processada",
+          );
+        } else {
+          logger.info({ faturaId: fatura.id, shopId }, "Renovação já processada, ignorando");
         }
       }
     }
@@ -358,7 +461,8 @@ router.post("/payment/webhook", async (req, res): Promise<void> => {
     // `subscription_authorized_payment` — o evento das cobranças mensais
     // seguintes de assinatura por cartão — passaria despercebido, e o barbeiro
     // pagaria o segundo mês sem receber os 30 dias.
-    if (type !== "payment" && type !== "subscription_preapproval") {
+    const tiposTratados = ["payment", "subscription_preapproval", "subscription_authorized_payment"];
+    if (!type || !tiposTratados.includes(type)) {
       logger.warn(
         { type, dataId: data?.id },
         "Webhook autêntico de tipo não tratado — nenhum plano foi estendido",

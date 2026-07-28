@@ -149,6 +149,48 @@ async function main(): Promise<void> {
 
   await db.execute(sql`delete from ${paymentNotificationsTable} where external_id = ${idTeste}`);
 
+  /*
+   * Assinatura por cartão: um mês pago concede uma vez, mesmo anunciado duas.
+   *
+   * Autorizar a assinatura dispara `subscription_preapproval`; a cobrança do
+   * mesmo mês chega como `subscription_authorized_payment`. Ids diferentes,
+   * mesmo mês de dinheiro — por isso a chave é assinatura + mês, e não o id da
+   * notificação. Errar isso concede 60 dias por 30 dias pagos.
+   *
+   * O formato espelha `chaveDoPeriodo` em routes/payment.ts. O que este teste
+   * garante é a propriedade, não o formato: mesmo mês deduplica, mês seguinte
+   * não.
+   */
+  console.log("\nassinatura por cartão — um mês concede uma vez:");
+
+  const preapproval = `preap-teste-${Date.now()}`;
+  const chave = (mes: string) => `${preapproval}:${mes}`;
+  const gravarPeriodo = async (mes: string): Promise<number> => {
+    const r = await db
+      .insert(paymentNotificationsTable)
+      .values({ tipo: "subscription_period", externalId: chave(mes), barbershopId: null })
+      .onConflictDoNothing()
+      .returning({ id: paymentNotificationsTable.id });
+    return r.length;
+  };
+
+  conferir("autorização da assinatura concede o mês", await gravarPeriodo("2026-08"), 1);
+  conferir("cobrança do MESMO mês não concede de novo", await gravarPeriodo("2026-08"), 0);
+  conferir("mês seguinte concede", await gravarPeriodo("2026-09"), 1);
+  conferir("reenvio do mês seguinte não concede", await gravarPeriodo("2026-09"), 0);
+
+  // Outra assinatura no mesmo mês é outro cliente — não pode ser confundida.
+  const outra = await db
+    .insert(paymentNotificationsTable)
+    .values({ tipo: "subscription_period", externalId: `outra-${Date.now()}:2026-08`, barbershopId: null })
+    .onConflictDoNothing()
+    .returning({ id: paymentNotificationsTable.id });
+  conferir("outra assinatura no mesmo mês concede", outra.length, 1);
+
+  await db.execute(
+    sql`delete from ${paymentNotificationsTable} where tipo = 'subscription_period' and external_id like '%teste%'`,
+  );
+
   console.log(falhas === 0 ? "\nOK: as duas portas fecham." : `\n${falhas} verificação(ões) falharam.`);
   process.exit(falhas === 0 ? 0 : 1);
 }
