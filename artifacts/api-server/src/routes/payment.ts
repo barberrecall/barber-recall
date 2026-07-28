@@ -1,7 +1,13 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request } from "express";
 import { eq } from "drizzle-orm";
-import { MercadoPagoConfig, PreApproval, Payment as MpPayment } from "mercadopago";
-import { db, barbershopTable } from "@workspace/db";
+import {
+  MercadoPagoConfig,
+  PreApproval,
+  Payment as MpPayment,
+  WebhookSignatureValidator,
+  InvalidWebhookSignatureError,
+} from "mercadopago";
+import { db, barbershopTable, paymentNotificationsTable } from "@workspace/db";
 import { logger } from "../lib/logger.js";
 
 const router: IRouter = Router();
@@ -119,8 +125,61 @@ router.get("/payment/pix-status/:paymentId", async (req, res): Promise<void> => 
   }
 });
 
+/**
+ * Confirma que a notificação veio mesmo do Mercado Pago.
+ *
+ * O endereço do webhook é público e previsível, e o corpo carrega apenas um id
+ * de recurso. Sem esta checagem, qualquer um podia reenviar a notificação de um
+ * pagamento aprovado e ganhar mais 30 dias por reenvio.
+ *
+ * O `dataId` sai da query (`?data.id=`), não do corpo: é o valor que o Mercado
+ * Pago usa ao montar o manifesto assinado.
+ *
+ * Falha fechada quando o segredo não está configurado. A alternativa — aceitar
+ * tudo enquanto ninguém configurou — deixaria a brecha aberta exatamente no
+ * ambiente onde ela custa dinheiro. O aviso no start (ver index.ts) existe para
+ * que isso apareça antes de alguém tentar pagar, e não depois.
+ */
+function webhookAutentico(req: Request): { ok: true } | { ok: false; motivo: string } {
+  const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+
+  if (!secret) {
+    return { ok: false, motivo: "MERCADOPAGO_WEBHOOK_SECRET não configurada" };
+  }
+
+  try {
+    WebhookSignatureValidator.validate({
+      xSignature: req.headers["x-signature"],
+      xRequestId: req.headers["x-request-id"],
+      dataId: req.query["data.id"] as string | undefined,
+      secret,
+      // Janela curta: uma notificação legítima chega em segundos. Sem limite de
+      // tempo, uma assinatura válida capturada hoje valeria para sempre.
+      toleranceSeconds: 300,
+    });
+    return { ok: true };
+  } catch (err) {
+    const motivo =
+      err instanceof InvalidWebhookSignatureError ? err.reason : "erro inesperado na validação";
+    return { ok: false, motivo };
+  }
+}
+
 // POST /payment/webhook — public, called by Mercado Pago
 router.post("/payment/webhook", async (req, res): Promise<void> => {
+  const autentico = webhookAutentico(req);
+
+  if (!autentico.ok) {
+    logger.warn(
+      { motivo: autentico.motivo, requestId: req.headers["x-request-id"] },
+      "Webhook do Mercado Pago recusado",
+    );
+    // 401, e não 200: aqui não é retentativa do MP que se quer evitar, é
+    // requisição que não veio dele.
+    res.sendStatus(401);
+    return;
+  }
+
   try {
     const { type, data } = req.body as { type?: string; data?: { id?: string } };
 
@@ -129,6 +188,31 @@ router.post("/payment/webhook", async (req, res): Promise<void> => {
      * time. If the plan already expired (or was never set), starts from now.
      * This way early renewals are never penalised.
      */
+    /**
+     * Registra a notificação e diz se ela é inédita.
+     *
+     * Grava primeiro e decide pelo resultado, em vez de consultar e depois
+     * gravar: o índice único resolve a corrida entre duas entregas simultâneas
+     * da mesma notificação, coisa que um "consulta, depois grava" não faz.
+     *
+     * Vale também para retentativa legítima do próprio Mercado Pago, que
+     * acontece quando nossa resposta demora — ela chega com assinatura válida e
+     * mesmo assim não pode conceder tempo de novo.
+     */
+    const registrarSeInedita = async (
+      tipo: string,
+      externalId: string,
+      shopId: number,
+    ): Promise<boolean> => {
+      const inserido = await db
+        .insert(paymentNotificationsTable)
+        .values({ tipo, externalId, barbershopId: shopId })
+        .onConflictDoNothing()
+        .returning({ id: paymentNotificationsTable.id });
+
+      return inserido.length > 0;
+    };
+
     const computeNewExpiry = async (shopId: number): Promise<Date> => {
       const [shop] = await db
         .select({ planExpiresAt: barbershopTable.planExpiresAt })
@@ -149,11 +233,16 @@ router.post("/payment/webhook", async (req, res): Promise<void> => {
         : null;
 
       if (shopId && subscription.status === "authorized") {
-        const planExpiresAt = await computeNewExpiry(shopId);
-        await db
-          .update(barbershopTable)
-          .set({ plan: "pro", planExpiresAt })
-          .where(eq(barbershopTable.id, shopId));
+        const inedita = await registrarSeInedita(type, String(subscription.id), shopId);
+        if (inedita) {
+          const planExpiresAt = await computeNewExpiry(shopId);
+          await db
+            .update(barbershopTable)
+            .set({ plan: "pro", planExpiresAt })
+            .where(eq(barbershopTable.id, shopId));
+        } else {
+          logger.info({ preapprovalId: subscription.id, shopId }, "Assinatura já processada, ignorando");
+        }
       }
     }
 
@@ -163,11 +252,16 @@ router.post("/payment/webhook", async (req, res): Promise<void> => {
       if (payment.status === "approved" && payment.external_reference) {
         const shopId = parseInt(payment.external_reference, 10);
         if (!isNaN(shopId)) {
-          const planExpiresAt = await computeNewExpiry(shopId);
-          await db
-            .update(barbershopTable)
-            .set({ plan: "pro", planExpiresAt })
-            .where(eq(barbershopTable.id, shopId));
+          const inedita = await registrarSeInedita(type, String(payment.id), shopId);
+          if (inedita) {
+            const planExpiresAt = await computeNewExpiry(shopId);
+            await db
+              .update(barbershopTable)
+              .set({ plan: "pro", planExpiresAt })
+              .where(eq(barbershopTable.id, shopId));
+          } else {
+            logger.info({ paymentId: payment.id, shopId }, "Pagamento já processado, ignorando");
+          }
         }
       }
     }

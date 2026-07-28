@@ -7,3 +7,4 @@ export * from "./appointments";
 export * from "./coupons";
 export * from "./campaigns";
 export * from "./notifications";
+export * from "./payment-notifications";
