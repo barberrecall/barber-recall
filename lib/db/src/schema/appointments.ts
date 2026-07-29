@@ -5,6 +5,7 @@ import { barbershopTable } from "./barbershop";
 import { clientsTable } from "./clients";
 import { barbersTable } from "./barbers";
 import { servicesTable } from "./services";
+import { couponsTable } from "./coupons";
 
 export const appointmentsTable = pgTable("appointments", {
   id: serial("id").primaryKey(),
@@ -15,6 +16,17 @@ export const appointmentsTable = pgTable("appointments", {
   valor: numeric("valor", { precision: 10, scale: 2 }).notNull().default("0"),
   desconto: numeric("desconto", { precision: 10, scale: 2 }).notNull().default("0"),
   valorFinal: numeric("valor_final", { precision: 10, scale: 2 }).notNull().default("0"),
+  /**
+   * Cupom aplicado, quando houve.
+   *
+   * Sem esta coluna o resgate não deixava rastro: o formulário web tinha campo
+   * de código, o servidor ignorava, e o "Cupons Usados" do Dashboard somava
+   * `uso_atual` — que nada incrementava. A métrica ficava zerada para sempre.
+   *
+   * `set null` ao apagar o cupom, e não cascade: apagar um cupom não pode
+   * apagar o atendimento que já aconteceu e já foi cobrado.
+   */
+  cupomId: integer("cupom_id").references(() => couponsTable.id, { onDelete: "set null" }),
   data: timestamp("data", { withTimezone: true }).notNull(),
   observacoes: text("observacoes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

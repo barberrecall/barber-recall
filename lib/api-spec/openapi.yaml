@@ -1092,10 +1092,20 @@ components:
           type: ["integer", "null"]
         servicoNome:
           type: ["string", "null"]
+        cupomId:
+          type: ["integer", "null"]
+        cupomCodigo:
+          type: ["string", "null"]
+          description: >
+            Cupom aplicado, quando houve. O código vem junto do id porque a tela
+            precisa mostrar QUAL cupom foi usado sem fazer outra busca.
         valor:
           type: number
         desconto:
           type: number
+          description: >
+            Quando há cupom, este valor é calculado pelo servidor a partir do
+            cupom — o desconto enviado pelo cliente é ignorado.
         valorFinal:
           type: number
         data:

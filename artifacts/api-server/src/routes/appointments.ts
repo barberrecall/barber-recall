@@ -1,9 +1,10 @@
 import { Router, type IRouter } from "express";
 import { eq, and, sql } from "drizzle-orm";
-import { db, appointmentsTable, clientsTable, barbersTable, servicesTable } from "@workspace/db";
+import { db, appointmentsTable, clientsTable, barbersTable, servicesTable, couponsTable } from "@workspace/db";
 import { syncClientRecallCache } from "../lib/recall";
 import { nullableInt, requiredNumber, requiredDate } from "../lib/coerce";
-import { diaLocal } from "../lib/fuso";
+import { diaLocal, hojeLocal } from "../lib/fuso";
+import { validarCupom } from "../lib/cupom";
 
 const router: IRouter = Router();
 
@@ -19,6 +20,13 @@ async function fmtAppt(a: typeof appointmentsTable.$inferSelect) {
     const [s] = await db.select({ nome: servicesTable.nome }).from(servicesTable).where(eq(servicesTable.id, a.servicoId));
     servicoNome = s?.nome ?? null;
   }
+  // O código, e não só o id: a tela precisa mostrar QUAL cupom foi usado, e o
+  // id sozinho obrigaria o cliente a buscar de novo.
+  let cupomCodigo: string | null = null;
+  if (a.cupomId) {
+    const [c] = await db.select({ codigo: couponsTable.codigo }).from(couponsTable).where(eq(couponsTable.id, a.cupomId));
+    cupomCodigo = c?.codigo ?? null;
+  }
   return {
     id: a.id,
     clienteId: a.clienteId,
@@ -32,6 +40,8 @@ async function fmtAppt(a: typeof appointmentsTable.$inferSelect) {
     valorFinal: parseFloat(a.valorFinal),
     data: a.data.toISOString(),
     observacoes: a.observacoes ?? null,
+    cupomId: a.cupomId ?? null,
+    cupomCodigo,
     createdAt: a.createdAt.toISOString(),
   };
 }
@@ -100,17 +110,74 @@ router.post("/appointments", async (req, res): Promise<void> => {
     if (!serviceOwned) { res.status(400).json({ error: "Serviço não pertence a esta barbearia." }); return; }
   }
 
-  const [a] = await db.insert(appointmentsTable).values({
-    barbershopId,
-    clienteId: clienteId!,
-    barbeiroId: barbeiroId ?? null,
-    servicoId: servicoId ?? null,
-    valor: String(valor),
-    desconto: String(desconto),
-    valorFinal: String(valorFinal),
-    data: data!,
-    observacoes: body.observacoes ?? null,
-  }).returning();
+  /*
+   * Cupom, quando informado.
+   *
+   * Antes desta parte o `couponCode` era aceito pelo formulário, declarado no
+   * openapi e ignorado pelo servidor: o barbeiro digitava o código, salvava, e
+   * o resgate desaparecia. O "Cupons Usados" do Dashboard nunca saía de zero
+   * porque nada incrementava `uso_atual`.
+   *
+   * Código inválido é ERRO, não silêncio. Salvar o atendimento ignorando o
+   * cupom faria o barbeiro dar o desconto no balcão e a barbearia não registrar
+   * — divergência de caixa que só aparece no fechamento do mês.
+   *
+   * O desconto é calculado AQUI, e não aceito do cliente. O valor que vem do
+   * navegador é palpite da tela; quem decide quanto um cupom vale é o cupom.
+   */
+  let cupomId: number | null = null;
+  let descontoFinal = desconto!;
+  let valorFinalCalculado = valorFinal!;
+
+  const codigo = typeof body.couponCode === "string" ? body.couponCode.trim() : "";
+
+  if (codigo) {
+    const [cupom] = await db
+      .select()
+      .from(couponsTable)
+      .where(and(eq(couponsTable.codigo, codigo), eq(couponsTable.barbershopId, barbershopId)));
+
+    // A data de hoje sai do banco, no fuso da barbearia: comparar validade com
+    // `new Date()` usaria UTC e recusaria um cupom válido a partir das 21h.
+    const [{ hoje }] = await db.execute<{ hoje: string }>(sql`select ${hojeLocal()} as hoje`).then((r) => r.rows);
+
+    const resultado = validarCupom(cupom, valor!, hoje);
+
+    if (!resultado.ok) {
+      res.status(400).json({ error: resultado.motivo });
+      return;
+    }
+
+    cupomId = cupom!.id;
+    descontoFinal = resultado.desconto;
+    valorFinalCalculado = Math.round((valor! - resultado.desconto) * 100) / 100;
+  }
+
+  const [a] = await db.transaction(async (tx) => {
+    const [criado] = await tx.insert(appointmentsTable).values({
+      barbershopId,
+      clienteId: clienteId!,
+      barbeiroId: barbeiroId ?? null,
+      servicoId: servicoId ?? null,
+      valor: String(valor),
+      desconto: String(descontoFinal),
+      valorFinal: String(valorFinalCalculado),
+      data: data!,
+      observacoes: body.observacoes ?? null,
+      cupomId,
+    }).returning();
+
+    // Na mesma transação: se o atendimento falhar, o cupom não pode ficar
+    // marcado como usado — e vice-versa.
+    if (cupomId !== null) {
+      await tx
+        .update(couponsTable)
+        .set({ usoAtual: sql`${couponsTable.usoAtual} + 1` })
+        .where(eq(couponsTable.id, cupomId));
+    }
+
+    return [criado];
+  });
 
   await syncClientRecallCache(clienteId!, barbershopId);
 
@@ -168,9 +235,31 @@ router.delete("/appointments/:id", async (req, res): Promise<void> => {
   const barbershopId = req.session.barbershopId!;
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
-  const [deleted] = await db.delete(appointmentsTable)
-    .where(and(eq(appointmentsTable.id, id), eq(appointmentsTable.barbershopId, barbershopId)))
-    .returning({ clienteId: appointmentsTable.clienteId });
+  const [deleted] = await db.transaction(async (tx) => {
+    const [removido] = await tx.delete(appointmentsTable)
+      .where(and(eq(appointmentsTable.id, id), eq(appointmentsTable.barbershopId, barbershopId)))
+      .returning({ clienteId: appointmentsTable.clienteId, cupomId: appointmentsTable.cupomId });
+
+    /*
+     * Devolve o uso do cupom.
+     *
+     * Sem isto a contagem só sobe: um atendimento lançado por engano e apagado
+     * em seguida consumiria um uso para sempre. Num cupom com limite de 50, uma
+     * dúzia de correções esgotaria a promoção antes da hora, e ninguém ligaria
+     * uma coisa à outra.
+     *
+     * O `greatest(...,0)` protege contra ficar negativo se alguém zerar o
+     * contador na mão pelo painel.
+     */
+    if (removido?.cupomId != null) {
+      await tx
+        .update(couponsTable)
+        .set({ usoAtual: sql`greatest(${couponsTable.usoAtual} - 1, 0)` })
+        .where(eq(couponsTable.id, removido.cupomId));
+    }
+
+    return [removido];
+  });
 
   // Sem isso o cliente ficaria com uma visita a mais e um `ultimoAtendimento`
   // apontando para o atendimento que acabou de ser removido.

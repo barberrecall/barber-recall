@@ -144,6 +144,7 @@ export default function NewAppointmentScreen() {
   const [servicoId, setServicoId] = useState<number | null>(null);
   const [valor, setValor] = useState("0");
   const [desconto, setDesconto] = useState("0");
+  const [cupom, setCupom] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -182,6 +183,9 @@ export default function NewAppointmentScreen() {
           ...(servicoId ? { servicoId } : {}),
           valor: parseMoney(valor),
           desconto: parseMoney(desconto),
+          // O servidor calcula o desconto do cupom e ignora o que mandamos —
+          // quem decide quanto um cupom vale é o cupom, não a tela.
+          ...(cupom.trim() ? { couponCode: cupom.trim().toUpperCase() } : {}),
           valorFinal,
           // Registro do que acabou de acontecer: a data é agora. Datas futuras
           // não contam como visita (skill `atendimentos-scheduling`).
@@ -281,6 +285,22 @@ export default function NewAppointmentScreen() {
             />
           </View>
         </View>
+
+        <Field
+          label="Cupom"
+          value={cupom}
+          onChangeText={(t) => setCupom(t.toUpperCase())}
+          placeholder="opcional"
+          autoCapitalize="characters"
+          autoCorrect={false}
+          editable={!createAppointment.isPending}
+        />
+
+        {cupom.trim() ? (
+          <Text className="-mt-2 text-xs text-ink-muted">
+            O desconto do cupom é calculado ao salvar e substitui o valor acima.
+          </Text>
+        ) : null}
 
         <Card>
           <View className="flex-row items-center justify-between">

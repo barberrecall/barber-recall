@@ -22,12 +22,51 @@ export const EMPTY_CLIENT: ClientFormValues = {
 
 type Errors = Partial<Record<keyof ClientFormValues, string>>;
 
-/** `dd/MM/yyyy` (como o usuário digita) para `yyyy-MM-dd` (como a API espera). */
+/**
+ * Insere as barras enquanto a pessoa digita.
+ *
+ * Sem isto o campo exigia `dd/mm/aaaa` digitado por inteiro, barras incluídas —
+ * num teclado numérico, onde a barra nem aparece. Quem digitava só os números
+ * recebia "use o formato dd/mm/aaaa" sem entender o que faltava.
+ *
+ * Aceita apagar: o corte por comprimento é refeito a cada tecla a partir dos
+ * dígitos, então o backspace não fica preso na barra.
+ */
+export function mascaraData(texto: string): string {
+  const d = texto.replace(/\D/g, "").slice(0, 8);
+
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
+/**
+ * `dd/MM/yyyy` (como o usuário digita) para `yyyy-MM-dd` (como a API espera).
+ *
+ * Recusa data que não existe. A versão anterior só conferia o formato, então
+ * `31/02/1990` virava `1990-02-31` e o Postgres derrubava a inserção — o
+ * barbeiro via "erro no servidor" ao cadastrar um cliente, sem pista de que o
+ * problema era o dia digitado.
+ */
 export function toIsoDate(value: string): string | undefined {
   const match = value.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (!match) return undefined;
 
   const [, dia, mes, ano] = match;
+  const d = Number(dia);
+  const m = Number(mes);
+  const a = Number(ano);
+
+  // Ano mínimo arbitrário mas útil: pega dígito trocado (1090 em vez de 1990)
+  // e ninguém vivo nasceu antes disso.
+  if (a < 1900) return undefined;
+  if (m < 1 || m > 12) return undefined;
+
+  // O construtor normaliza 31/02 para 03/03; comparar de volta é o que revela
+  // que o dia não existia naquele mês.
+  const teste = new Date(Date.UTC(a, m - 1, d));
+  if (teste.getUTCDate() !== d || teste.getUTCMonth() !== m - 1) return undefined;
+
   return `${ano}-${mes}-${dia}`;
 }
 
@@ -58,7 +97,7 @@ function validate(values: ClientFormValues): Errors {
   }
 
   if (values.dataNascimento.trim() && !toIsoDate(values.dataNascimento)) {
-    errors.dataNascimento = "Use o formato dd/mm/aaaa.";
+    errors.dataNascimento = "Data inválida. Use dia/mês/ano, como 25/12/1990.";
   }
 
   return errors;
@@ -150,10 +189,13 @@ export function ClientForm({
         <Field
           label="Data de nascimento"
           value={values.dataNascimento}
-          onChangeText={set("dataNascimento")}
+          onChangeText={(t) => set("dataNascimento")(mascaraData(t))}
           error={errors.dataNascimento}
           placeholder="dd/mm/aaaa"
-          keyboardType="numbers-and-punctuation"
+          maxLength={10}
+          // Teclado só de números: as barras entram sozinhas pela máscara, e o
+          // teclado com pontuação obrigava a procurar a barra que nem precisa.
+          keyboardType="number-pad"
           editable={!submitting}
         />
 

@@ -178,7 +178,15 @@ export interface Appointment {
   servicoId?: number | null;
   /** @nullable */
   servicoNome?: string | null;
+  /** @nullable */
+  cupomId?: number | null;
+  /**
+     * Cupom aplicado, quando houve. O código vem junto do id porque a tela precisa mostrar QUAL cupom foi usado sem fazer outra busca.
+     * @nullable
+     */
+  cupomCodigo?: string | null;
   valor: number;
+  /** Quando há cupom, este valor é calculado pelo servidor a partir do cupom — o desconto enviado pelo cliente é ignorado. */
   desconto?: number;
   valorFinal: number;
   data: string;
