@@ -145,7 +145,17 @@ export default function RegisterPage() {
             Ao criar uma conta, você concorda com os nossos{" "}
             <span className="text-primary cursor-pointer hover:underline">Termos de Uso</span>.
           </p>
-        </form>
+        
+        {/*
+          No cadastro, e não escondido num menu: é aqui que a pessoa entrega os
+          dados, e é aqui que ela precisa conseguir ler o que aceita.
+        */}
+        <p className="text-xs text-muted-foreground text-center">
+          Ao criar a conta você concorda com os{" "}
+          <a href="/termos" className="underline">Termos de Uso</a> e a{" "}
+          <a href="/privacidade" className="underline">Política de Privacidade</a>.
+        </p>
+      </form>
 
         <p className="mt-8 text-sm text-muted-foreground">
           Já tem uma conta?{" "}

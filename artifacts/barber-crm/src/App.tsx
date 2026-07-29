@@ -30,6 +30,8 @@ import SettingsPage from '@/pages/settings';
 import PaymentSuccessPage from '@/pages/payment-success';
 import PaymentPendingPage from '@/pages/payment-pending';
 import PaymentFailurePage from '@/pages/payment-failure';
+import PrivacidadePage from '@/pages/privacidade';
+import TermosPage from '@/pages/termos';
 import ForgotPasswordPage from '@/pages/forgot-password';
 import ResetPasswordPage from '@/pages/reset-password';
 import AdminLoginPage from '@/pages/admin/login';
@@ -49,6 +51,13 @@ function AppRoutes() {
       {/* Públicas: quem esqueceu a senha, por definição, não está autenticado. */}
       <Route path="/esqueci-senha" component={ForgotPasswordPage} />
       <Route path="/redefinir-senha" component={ResetPasswordPage} />
+      {/*
+        Públicas e sem login: a Apple exige uma URL de política de privacidade
+        acessível para aprovar o app, e a LGPD exige que o titular consiga ler
+        antes de entregar qualquer dado.
+      */}
+      <Route path="/privacidade" component={PrivacidadePage} />
+      <Route path="/termos" component={TermosPage} />
 
       {/* Payment return pages — standalone, no auth required */}
       <Route path="/payment/success" component={PaymentSuccessPage} />

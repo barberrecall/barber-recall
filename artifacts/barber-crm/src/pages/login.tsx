@@ -109,7 +109,13 @@ export default function LoginPage() {
               </>
             )}
           </Button>
-        </form>
+        
+        <p className="text-xs text-muted-foreground text-center pt-2">
+          <a href="/termos" className="underline">Termos</a>
+          {" · "}
+          <a href="/privacidade" className="underline">Privacidade</a>
+        </p>
+      </form>
 
         <p className="mt-8 text-sm text-muted-foreground">
           <div className="text-center mb-3">
