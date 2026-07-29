@@ -1,0 +1,77 @@
+name: Backup do banco
+
+# Complementa o "instant restore" do Neon, que hoje cobre só 6 horas no plano
+# Free. Esta cópia vive num provedor diferente (Cloudflare R2), então protege
+# até contra um problema do lado do Neon, não só contra erro de quem opera o
+# sistema.
+#
+# Roda de madrugada, fora do horário comercial de qualquer fuso brasileiro, para
+# não competir por conexão com tráfego real. Também pode ser disparado à mão
+# (workflow_dispatch) para testar sem esperar o cron.
+on:
+  schedule:
+    - cron: "0 6 * * *" # 03:00 em Brasília (UTC-3)
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Dump do banco de produção
+        # `postgres:18` via Docker, e não o pg_dump do apt do runner: o banco é
+        # Postgres 18, e um pg_dump mais antigo que o servidor pode falhar ou
+        # omitir recursos silenciosamente. `-Fc` é o formato custom — comprimido
+        # e restaurável com `pg_restore`, ao contrário de um `.sql` puro.
+        #
+        # `-v /tmp:/tmp` é obrigatório: sem montar o volume, `/tmp/dump.bin`
+        # existe só dentro do container e some junto com ele (`--rm`) assim que
+        # o pg_dump termina — os passos seguintes não achariam nada.
+        run: |
+          docker run --rm -v /tmp:/tmp postgres:18 \
+            pg_dump "${{ secrets.PROD_DATABASE_URL }}" -Fc -f /tmp/dump.bin
+
+          test -s /tmp/dump.bin || {
+            echo "::error::dump.bin vazio ou ausente — pg_dump falhou"
+            exit 1
+          }
+
+      - name: Renomeia com data
+        id: nome
+        run: |
+          echo "arquivo=backup-$(date -u +%Y-%m-%d).bin" >> "$GITHUB_OUTPUT"
+
+      - name: Envia para o R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          aws s3 cp /tmp/dump.bin \
+            "s3://${{ secrets.R2_BUCKET }}/${{ steps.nome.outputs.arquivo }}" \
+            --endpoint-url "${{ secrets.R2_ENDPOINT }}"
+
+      - name: Apaga backups com mais de 30 dias
+        # Sem isto o bucket cresce para sempre. 30 dias de sobra em cima da
+        # janela de 7 dias que o plano Launch do Neon dará depois — esta cópia
+        # é para o cenário em que o problema só é notado semanas depois.
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          # `LastModified` vem como "2026-07-29T10:30:00.000Z". Comparar isso
+          # com só "2026-07-29" dá resultado errado: string mais longa com o
+          # mesmo prefixo é "maior" na comparação lexicográfica que o JMESPath
+          # usa, então nada seria apagado nunca. Adicionar a hora ao corte
+          # resolve.
+          corte="$(date -u -d '30 days ago' +%Y-%m-%d)T00:00:00.000Z"
+          aws s3api list-objects-v2 \
+            --bucket "${{ secrets.R2_BUCKET }}" \
+            --endpoint-url "${{ secrets.R2_ENDPOINT }}" \
+            --query "Contents[?LastModified<='${corte}'].Key" \
+            --output text \
+          | tr '\t' '\n' \
+          | grep -v '^None$' \
+          | while read -r chave; do
+              [ -n "$chave" ] && aws s3 rm "s3://${{ secrets.R2_BUCKET }}/${chave}" \
+                --endpoint-url "${{ secrets.R2_ENDPOINT }}"
+            done
