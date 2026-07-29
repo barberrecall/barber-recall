@@ -75,64 +75,111 @@ router.get("/notifications", async (req, res): Promise<void> => {
     for (const autor of autores) sentByNomes.set(autor.id, autor.nome);
   }
 
-  const result = await Promise.all(
-    rows.map(async (n) => {
-      const [client] = await db
-        .select({ nome: clientsTable.nome, telefone: clientsTable.telefone, ultimoAtendimento: clientsTable.ultimoAtendimento })
-        .from(clientsTable)
-        .where(eq(clientsTable.id, n.clientId));
+  /*
+   * Três consultas em lote, e não três por linha.
+   *
+   * A versão anterior buscava cliente, campanha e cupom dentro do laço: cem
+   * disparos pendentes viravam trezentas idas ao banco. Segue o mesmo idioma
+   * que o bloco acima já usava para os autores — `inArray` com os ids únicos,
+   * depois um Map para consultar em memória.
+   *
+   * O cupom depende da campanha, então vem depois: só dá para saber quais
+   * cupons buscar depois de saber quais campanhas estão em jogo.
+   */
+  const clientIds = [...new Set(rows.map((n) => n.clientId))];
+  const campaignIds = [...new Set(rows.map((n) => n.campaignId))];
 
-      const [campaign] = await db
-        .select({ nome: campaignsTable.nome, mensagem: campaignsTable.mensagem, cupomId: campaignsTable.cupomId })
-        .from(campaignsTable)
-        .where(eq(campaignsTable.id, n.campaignId));
-
-      let cupomCodigo: string | null = null;
-      if (campaign?.cupomId) {
-        const [coupon] = await db
-          .select({ codigo: couponsTable.codigo })
-          .from(couponsTable)
-          .where(eq(couponsTable.id, campaign.cupomId));
-        cupomCodigo = coupon?.codigo ?? null;
-      }
-
-      const dias = daysSince(client?.ultimoAtendimento ?? null);
-      const mensagemResolvida = campaign?.mensagem
-        ? resolveMessage(campaign.mensagem, {
-            nome: client?.nome ?? "",
-            barbearia: shop?.nome ?? "",
-            dias,
-            cupomCodigo,
+  const clientesPorId = new Map(
+    (clientIds.length
+      ? await db
+          .select({
+            id: clientsTable.id,
+            nome: clientsTable.nome,
+            telefone: clientsTable.telefone,
+            ultimoAtendimento: clientsTable.ultimoAtendimento,
           })
+          .from(clientsTable)
+          .where(inArray(clientsTable.id, clientIds))
+      : []
+    ).map((c) => [c.id, c]),
+  );
+
+  const campanhasPorId = new Map(
+    (campaignIds.length
+      ? await db
+          .select({
+            id: campaignsTable.id,
+            nome: campaignsTable.nome,
+            mensagem: campaignsTable.mensagem,
+            cupomId: campaignsTable.cupomId,
+          })
+          .from(campaignsTable)
+          .where(inArray(campaignsTable.id, campaignIds))
+      : []
+    ).map((c) => [c.id, c]),
+  );
+
+  const cupomIds = [
+    ...new Set(
+      [...campanhasPorId.values()]
+        .map((c) => c.cupomId)
+        .filter((id): id is number => id !== null),
+    ),
+  ];
+
+  const cuponsPorId = new Map(
+    (cupomIds.length
+      ? await db
+          .select({ id: couponsTable.id, codigo: couponsTable.codigo })
+          .from(couponsTable)
+          .where(inArray(couponsTable.id, cupomIds))
+      : []
+    ).map((c) => [c.id, c.codigo]),
+  );
+
+  // Sem `async` nem `Promise.all`: depois do lote acima nada aqui toca no
+  // banco, e manter a forma assíncrona sugeriria I/O que não existe mais.
+  const result = rows.map((n) => {
+    const client = clientesPorId.get(n.clientId);
+    const campaign = campanhasPorId.get(n.campaignId);
+    const cupomCodigo = campaign?.cupomId != null ? cuponsPorId.get(campaign.cupomId) ?? null : null;
+
+    const dias = daysSince(client?.ultimoAtendimento ?? null);
+    const mensagemResolvida = campaign?.mensagem
+      ? resolveMessage(campaign.mensagem, {
+          nome: client?.nome ?? "",
+          barbearia: shop?.nome ?? "",
+          dias,
+          cupomCodigo,
+        })
+      : null;
+
+    const formattedPhone = client?.telefone ? formatPhone(client.telefone) : null;
+    const waLink =
+      formattedPhone && mensagemResolvida
+        ? `https://wa.me/${formattedPhone}?text=${encodeURIComponent(mensagemResolvida)}`
         : null;
 
-      const formattedPhone = client?.telefone ? formatPhone(client.telefone) : null;
-      const waLink =
-        formattedPhone && mensagemResolvida
-          ? `https://wa.me/${formattedPhone}?text=${encodeURIComponent(mensagemResolvida)}`
-          : null;
-
-      return {
-        id: n.id,
-        clientId: n.clientId,
-        clienteNome: client?.nome ?? null,
-        clienteTelefone: client?.telefone ?? null,
-        clienteUltimoAtendimento: client?.ultimoAtendimento?.toISOString() ?? null,
-        diasSemVisita: dias,
-        campaignId: n.campaignId,
-        campaignNome: campaign?.nome ?? null,
-        mensagemResolvida,
-        waLink,
-        status: n.status,
-        scheduledAt: n.scheduledAt.toISOString(),
-        sentAt: n.sentAt?.toISOString() ?? null,
-        sentBy: n.sentBy ?? null,
-        sentByNome: sentByNomes.get(n.sentBy ?? -1) ?? null,
-        opened: n.opened,
-        clicked: n.clicked,
-      };
-    })
-  );
+    return {
+      id: n.id,
+      clientId: n.clientId,
+      clienteNome: client?.nome ?? null,
+      clienteTelefone: client?.telefone ?? null,
+      clienteUltimoAtendimento: client?.ultimoAtendimento?.toISOString() ?? null,
+      diasSemVisita: dias,
+      campaignId: n.campaignId,
+      campaignNome: campaign?.nome ?? null,
+      mensagemResolvida,
+      waLink,
+      status: n.status,
+      scheduledAt: n.scheduledAt.toISOString(),
+      sentAt: n.sentAt?.toISOString() ?? null,
+      sentBy: n.sentBy ?? null,
+      sentByNome: sentByNomes.get(n.sentBy ?? -1) ?? null,
+      opened: n.opened,
+      clicked: n.clicked,
+    };
+  });
 
   res.json(result);
 });

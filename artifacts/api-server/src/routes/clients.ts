@@ -162,25 +162,27 @@ router.get("/clients/:id/appointments", async (req, res): Promise<void> => {
     .where(and(eq(clientsTable.id, id), eq(clientsTable.barbershopId, barbershopId)));
   if (!client) { res.status(404).json({ error: "not found" }); return; }
 
-  const rows = await db.select().from(appointmentsTable)
+  /*
+   * Uma consulta, não uma por atendimento.
+   *
+   * A versão anterior buscava o nome do barbeiro e o do serviço dentro do laço:
+   * um cliente com 50 atendimentos disparava 101 idas ao banco. O `leftJoin`
+   * traz tudo de uma vez, e é `left` porque barbeiro e serviço são opcionais —
+   * um `join` interno sumiria com os atendimentos que não têm nenhum dos dois.
+   */
+  const rows = await db
+    .select({
+      appointment: appointmentsTable,
+      barbeiroNome: barbersTable.nome,
+      servicoNome: servicesTable.nome,
+    })
+    .from(appointmentsTable)
+    .leftJoin(barbersTable, eq(barbersTable.id, appointmentsTable.barbeiroId))
+    .leftJoin(servicesTable, eq(servicesTable.id, appointmentsTable.servicoId))
     .where(and(eq(appointmentsTable.clienteId, id), eq(appointmentsTable.barbershopId, barbershopId)))
     .orderBy(sql`${appointmentsTable.data} desc`);
 
-  const result = await Promise.all(rows.map(async (a) => {
-    let barbeiroNome: string | null = null;
-    let servicoNome: string | null = null;
-    if (a.barbeiroId) {
-      const [b] = await db.select({ nome: barbersTable.nome }).from(barbersTable).where(eq(barbersTable.id, a.barbeiroId));
-      barbeiroNome = b?.nome ?? null;
-    }
-    if (a.servicoId) {
-      const [s] = await db.select({ nome: servicesTable.nome }).from(servicesTable).where(eq(servicesTable.id, a.servicoId));
-      servicoNome = s?.nome ?? null;
-    }
-    return fmtAppt(a, barbeiroNome, servicoNome, client.nome);
-  }));
-
-  res.json(result);
+  res.json(rows.map((r) => fmtAppt(r.appointment, r.barbeiroNome, r.servicoNome, client.nome)));
 });
 
 export default router;

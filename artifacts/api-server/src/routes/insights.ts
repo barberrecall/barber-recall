@@ -17,15 +17,33 @@ router.get("/insights", async (req, res): Promise<void> => {
   const clientesEmRisco = recall.at_risk;
   const potentialRevenue = clientesEmRisco * parseFloat(String(ticketMedio));
 
+  /*
+   * Um `group by`, não sete varreduras.
+   *
+   * A versão anterior rodava uma consulta por dia da semana, cada uma varrendo
+   * a tabela inteira de atendimentos da barbearia. Agrupar faz o Postgres
+   * percorrer os mesmos dados uma vez só.
+   *
+   * O `order by` e o `limit 1` deixam a escolha do melhor dia no banco: trazer
+   * sete linhas para ordenar em JavaScript funcionaria igual, mas o banco já
+   * sabe fazer isso e o resultado fica com uma linha só.
+   */
   const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-  const dayCounts = await Promise.all(
-    [0, 1, 2, 3, 4, 5, 6].map(async (d) => {
-      const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(appointmentsTable)
-        .where(and(eq(appointmentsTable.barbershopId, barbershopId), sql`EXTRACT(DOW FROM data) = ${d}`));
-      return { day: days[d], count: Number(count) };
+
+  const [melhor] = await db
+    .select({
+      dow: sql<number>`extract(dow from ${appointmentsTable.data})::int`,
+      total: sql<number>`count(*)::int`,
     })
-  );
-  const bestDay = dayCounts.sort((a, b) => b.count - a.count)[0]?.day ?? "Sexta";
+    .from(appointmentsTable)
+    .where(eq(appointmentsTable.barbershopId, barbershopId))
+    .groupBy(sql`extract(dow from ${appointmentsTable.data})`)
+    .orderBy(sql`count(*) desc`)
+    .limit(1);
+
+  // Sexta como padrão quando ainda não há atendimento nenhum: é palpite, e a
+  // versão anterior fazia o mesmo — sem histórico não há o que calcular.
+  const bestDay = melhor ? (days[melhor.dow] ?? "Sexta") : "Sexta";
 
   const insights = [
     { id: 1, tipo: "warning" as const, mensagem: `${clientesEmRisco} clientes estão em risco: passaram de ${diasRetorno + MARGEM_RETORNO_DIAS} dias sem cortar o cabelo.`, impacto: potentialRevenue },

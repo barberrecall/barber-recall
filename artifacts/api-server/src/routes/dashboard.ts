@@ -86,24 +86,31 @@ router.get("/dashboard/charts", async (req, res): Promise<void> => {
 
 router.get("/dashboard/recent-activity", async (req, res): Promise<void> => {
   const barbershopId = req.session.barbershopId!;
-  const rows = await db.select().from(appointmentsTable)
+  // O nome do cliente vem junto, em vez de uma consulta por linha. São só 10
+  // linhas, mas isto abre no Dashboard — a tela que todo mundo carrega primeiro
+  // e a que mais dói quando demora.
+  const rows = await db
+    .select({
+      createdAt: appointmentsTable.createdAt,
+      valorFinal: appointmentsTable.valorFinal,
+      clienteNome: clientsTable.nome,
+    })
+    .from(appointmentsTable)
+    .leftJoin(clientsTable, eq(clientsTable.id, appointmentsTable.clienteId))
     .where(eq(appointmentsTable.barbershopId, barbershopId))
     .orderBy(sql`${appointmentsTable.createdAt} desc`)
     .limit(10);
 
-  const result = await Promise.all(rows.map(async (a, i) => {
-    const [client] = await db.select({ nome: clientsTable.nome }).from(clientsTable).where(eq(clientsTable.id, a.clienteId));
-    return {
+  res.json(
+    rows.map((a, i) => ({
       id: i + 1,
       tipo: "appointment" as const,
-      descricao: `Atendimento registrado para ${client?.nome ?? "cliente"}`,
+      descricao: `Atendimento registrado para ${a.clienteNome ?? "cliente"}`,
       data: a.createdAt.toISOString(),
-      clienteNome: client?.nome ?? null,
+      clienteNome: a.clienteNome ?? null,
       valor: parseFloat(a.valorFinal),
-    };
-  }));
-
-  res.json(result);
+    })),
+  );
 });
 
 export default router;
