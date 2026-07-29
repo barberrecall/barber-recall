@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, sql, and } from "drizzle-orm";
 import { db, appointmentsTable } from "@workspace/db";
 import { countByRecallStatus, getDiasRetorno, MARGEM_RETORNO_DIAS } from "../lib/recall";
+import { diaDaSemanaLocal } from "../lib/fuso";
 
 const router: IRouter = Router();
 
@@ -32,12 +33,12 @@ router.get("/insights", async (req, res): Promise<void> => {
 
   const [melhor] = await db
     .select({
-      dow: sql<number>`extract(dow from ${appointmentsTable.data})::int`,
+      dow: diaDaSemanaLocal(appointmentsTable.data),
       total: sql<number>`count(*)::int`,
     })
     .from(appointmentsTable)
     .where(eq(appointmentsTable.barbershopId, barbershopId))
-    .groupBy(sql`extract(dow from ${appointmentsTable.data})`)
+    .groupBy(diaDaSemanaLocal(appointmentsTable.data))
     .orderBy(sql`count(*) desc`)
     .limit(1);
 

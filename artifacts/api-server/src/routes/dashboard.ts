@@ -2,28 +2,36 @@ import { Router, type IRouter } from "express";
 import { eq, sql, and, gte, lt } from "drizzle-orm";
 import { db, clientsTable, appointmentsTable, couponsTable } from "@workspace/db";
 import { countByRecallStatus, getDiasRetorno, getTaxaRetorno } from "../lib/recall";
+import { diaLocal, hojeLocal, FUSO_BARBEARIA } from "../lib/fuso";
 
 const router: IRouter = Router();
 
 router.get("/dashboard/stats", async (req, res): Promise<void> => {
   const barbershopId = req.session.barbershopId!;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  /*
+   * "Hoje" é o dia no calendário da barbearia.
+   *
+   * `new Date(); setHours(0,0,0,0)` usa o fuso do processo, que no Railway é
+   * UTC. Meia-noite em Londres são 21:00 do dia anterior em Mossoró, então
+   * tudo que acontecia das 21h à meia-noite era contado no dia seguinte — o
+   * barbeiro fechava o caixa e via o faturamento zerado.
+   */
+  const ehHoje = (coluna: Parameters<typeof diaLocal>[0]) =>
+    sql`${diaLocal(coluna)} = ${hojeLocal()}`;
 
   const diasRetorno = await getDiasRetorno(barbershopId);
   const recall = await countByRecallStatus(barbershopId, diasRetorno);
 
   // "Novos Hoje" é cadastro do dia, não um status de recall.
   const [{ newToday }] = await db.select({ newToday: sql<number>`count(*)` }).from(clientsTable)
-    .where(and(eq(clientsTable.barbershopId, barbershopId), gte(clientsTable.createdAt, today), lt(clientsTable.createdAt, tomorrow)));
+    .where(and(eq(clientsTable.barbershopId, barbershopId), ehHoje(clientsTable.createdAt)));
 
   const [{ apptToday }] = await db.select({ apptToday: sql<number>`count(*)` }).from(appointmentsTable)
-    .where(and(eq(appointmentsTable.barbershopId, barbershopId), gte(appointmentsTable.data, today), lt(appointmentsTable.data, tomorrow)));
+    .where(and(eq(appointmentsTable.barbershopId, barbershopId), ehHoje(appointmentsTable.data)));
 
   const [{ revenueToday }] = await db.select({ revenueToday: sql<number>`coalesce(sum(valor_final::numeric), 0)` }).from(appointmentsTable)
-    .where(and(eq(appointmentsTable.barbershopId, barbershopId), gte(appointmentsTable.data, today), lt(appointmentsTable.data, tomorrow)));
+    .where(and(eq(appointmentsTable.barbershopId, barbershopId), ehHoje(appointmentsTable.data)));
 
   const [{ couponsUsed }] = await db.select({ couponsUsed: sql<number>`coalesce(sum(uso_atual), 0)` }).from(couponsTable)
     .where(eq(couponsTable.barbershopId, barbershopId));
@@ -45,43 +53,67 @@ router.get("/dashboard/stats", async (req, res): Promise<void> => {
 router.get("/dashboard/charts", async (req, res): Promise<void> => {
   const barbershopId = req.session.barbershopId!;
 
-  const clientesPorDia: { label: string; value: number }[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    d.setHours(0, 0, 0, 0);
-    const next = new Date(d);
-    next.setDate(next.getDate() + 1);
-    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(clientsTable)
-      .where(and(eq(clientsTable.barbershopId, barbershopId), gte(clientsTable.createdAt, d), lt(clientsTable.createdAt, next)));
-    clientesPorDia.push({ label: d.toLocaleDateString("pt-BR", { weekday: "short" }), value: Number(count) });
-  }
+  /*
+   * Séries agregadas no banco, no fuso da barbearia.
+   *
+   * A versão anterior fazia um laço em JavaScript com uma consulta por ponto —
+   * 19 idas ao banco para desenhar três gráficos — e montava as fatias com
+   * `setHours(0,0,0,0)`, que usa o fuso do processo. No Railway isso é UTC,
+   * então cada "dia" começava às 21:00 do dia anterior em Mossoró e os pontos
+   * saíam deslocados.
+   *
+   * `generate_series` cria as fatias no próprio banco, o `left join` garante
+   * que dia sem movimento apareça como zero em vez de sumir do gráfico, e o
+   * `AT TIME ZONE` faz o corte cair onde o barbeiro espera.
+   */
+  const fuso = sql.raw(`'${FUSO_BARBEARIA}'`);
 
-  const retornoMensal: { label: string; value: number }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i, 1);
-    d.setHours(0, 0, 0, 0);
-    const next = new Date(d);
-    next.setMonth(next.getMonth() + 1);
-    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(appointmentsTable)
-      .where(and(eq(appointmentsTable.barbershopId, barbershopId), gte(appointmentsTable.data, d), lt(appointmentsTable.data, next)));
-    retornoMensal.push({ label: d.toLocaleDateString("pt-BR", { month: "short" }), value: Number(count) });
-  }
+  const seteDias = await db.execute<{ dia: string; total: number }>(sql`
+    with dias as (
+      select generate_series(
+        ((now() AT TIME ZONE ${fuso})::date - interval '6 days'),
+        ((now() AT TIME ZONE ${fuso})::date),
+        interval '1 day'
+      )::date as dia
+    )
+    select dias.dia::text as dia, count(c.id)::int as total
+    from dias
+    left join clients c
+      on c.barbershop_id = ${barbershopId}
+     and (c.created_at AT TIME ZONE ${fuso})::date = dias.dia
+    group by dias.dia
+    order by dias.dia
+  `);
 
-  const receita: { label: string; value: number }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i, 1);
-    d.setHours(0, 0, 0, 0);
-    const next = new Date(d);
-    next.setMonth(next.getMonth() + 1);
-    const [{ total }] = await db.select({ total: sql<number>`coalesce(sum(valor_final::numeric), 0)` }).from(appointmentsTable)
-      .where(and(eq(appointmentsTable.barbershopId, barbershopId), gte(appointmentsTable.data, d), lt(appointmentsTable.data, next)));
-    receita.push({ label: d.toLocaleDateString("pt-BR", { month: "short" }), value: parseFloat(String(total)) });
-  }
+  const seisMeses = await db.execute<{ mes: string; atendimentos: number; receita: number }>(sql`
+    with meses as (
+      select generate_series(
+        date_trunc('month', (now() AT TIME ZONE ${fuso})::date - interval '5 months'),
+        date_trunc('month', (now() AT TIME ZONE ${fuso})::date),
+        interval '1 month'
+      )::date as mes
+    )
+    select meses.mes::text as mes,
+           count(a.id)::int as atendimentos,
+           coalesce(sum(a.valor_final::numeric), 0)::float as receita
+    from meses
+    left join appointments a
+      on a.barbershop_id = ${barbershopId}
+     and date_trunc('month', (a.data AT TIME ZONE ${fuso})) = meses.mes
+    group by meses.mes
+    order by meses.mes
+  `);
 
-  res.json({ clientesPorDia, retornoMensal, receita });
+  const rotuloDia = (iso: string) =>
+    new Date(`${iso}T12:00:00Z`).toLocaleDateString("pt-BR", { weekday: "short" });
+  const rotuloMes = (iso: string) =>
+    new Date(`${iso}T12:00:00Z`).toLocaleDateString("pt-BR", { month: "short" });
+
+  res.json({
+    clientesPorDia: seteDias.rows.map((r) => ({ label: rotuloDia(r.dia), value: Number(r.total) })),
+    retornoMensal: seisMeses.rows.map((r) => ({ label: rotuloMes(r.mes), value: Number(r.atendimentos) })),
+    receita: seisMeses.rows.map((r) => ({ label: rotuloMes(r.mes), value: Number(r.receita) })),
+  });
 });
 
 router.get("/dashboard/recent-activity", async (req, res): Promise<void> => {

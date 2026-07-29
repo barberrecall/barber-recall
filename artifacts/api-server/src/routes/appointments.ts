@@ -3,6 +3,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { db, appointmentsTable, clientsTable, barbersTable, servicesTable } from "@workspace/db";
 import { syncClientRecallCache } from "../lib/recall";
 import { nullableInt, requiredNumber, requiredDate } from "../lib/coerce";
+import { diaLocal } from "../lib/fuso";
 
 const router: IRouter = Router();
 
@@ -42,7 +43,10 @@ router.get("/appointments", async (req, res): Promise<void> => {
   const conditions = [eq(appointmentsTable.barbershopId, barbershopId)];
   if (barberId) conditions.push(eq(appointmentsTable.barbeiroId, parseInt(barberId, 10)));
   if (clientId) conditions.push(eq(appointmentsTable.clienteId, parseInt(clientId, 10)));
-  if (date) conditions.push(sql`DATE(${appointmentsTable.data}) = ${date}`);
+  // O dia vem do calendário da barbearia, não de Londres. `DATE()` direto na
+  // coluna usa o fuso da sessão do banco, que é GMT, e jogava todo atendimento
+  // registrado depois das 21h para o dia seguinte.
+  if (date) conditions.push(sql`${diaLocal(appointmentsTable.data)} = ${date}::date`);
 
   const rows = await db.select().from(appointmentsTable).where(and(...conditions)).orderBy(sql`${appointmentsTable.data} desc`);
   const result = await Promise.all(rows.map(fmtAppt));
