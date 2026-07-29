@@ -1,4 +1,4 @@
-import { LegalPage, Preencher } from "@/components/legal-page";
+import { LegalPage } from "@/components/legal-page";
 
 /**
  * Política de Privacidade.
@@ -26,9 +26,9 @@ export default function PrivacidadePage() {
 
       <h2>1. Quem é o responsável</h2>
       <p>
-        O Barber Recall é operado por <Preencher>nome completo</Preencher>, inscrito no{" "}
-        <Preencher>CPF ou CNPJ do MEI</Preencher>, com sede em{" "}
-        <Preencher>cidade</Preencher>, Rio Grande do Norte.
+        O Barber Recall é operado por <strong>Roseilson Gledson Costa Linhares</strong>, inscrito no{" "}
+        CPF <strong>705.126.424-94</strong>, com sede em{" "}
+        Mossoró, Rio Grande do Norte.
       </p>
       <p>
         Contato para qualquer assunto de privacidade, incluindo os pedidos descritos na seção 7:{" "}
@@ -256,7 +256,7 @@ export default function PrivacidadePage() {
 
       <h2>12. Encarregado de dados</h2>
       <p>
-        O encarregado pelo tratamento de dados pessoais é <Preencher>nome do encarregado</Preencher>,
+        O encarregado pelo tratamento de dados pessoais é Roseilson Gledson Costa Linhares,
         contatável em <strong>barberrecall@gmail.com</strong>.
       </p>
     </LegalPage>

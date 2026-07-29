@@ -1,4 +1,4 @@
-import { LegalPage, Preencher } from "@/components/legal-page";
+import { LegalPage } from "@/components/legal-page";
 
 /**
  * Termos de Uso.
@@ -26,9 +26,9 @@ export default function TermosPage() {
 
       <h2>1. Quem oferece o serviço</h2>
       <p>
-        O Barber Recall é oferecido por <Preencher>nome completo</Preencher>, inscrito no{" "}
-        <Preencher>CPF ou CNPJ do MEI</Preencher>, com sede em{" "}
-        <Preencher>cidade</Preencher>, Rio Grande do Norte. Contato:{" "}
+        O Barber Recall é oferecido por <strong>Roseilson Gledson Costa Linhares</strong>, inscrito no{" "}
+        CPF <strong>705.126.424-94</strong>, com sede em{" "}
+        Mossoró, Rio Grande do Norte. Contato:{" "}
         <strong>barberrecall@gmail.com</strong>.
       </p>
 
@@ -189,7 +189,7 @@ export default function TermosPage() {
       <h2>12. Lei e foro</h2>
       <p>
         Estes termos seguem a lei brasileira. Fica eleito o foro de{" "}
-        <Preencher>comarca</Preencher>, Rio Grande do Norte, para resolver eventuais disputas —
+        Mossoró, Rio Grande do Norte, para resolver eventuais disputas —
         ressalvado o direito do consumidor de escolher o foro do seu próprio domicílio, garantido
         pelo Código de Defesa do Consumidor.
       </p>
