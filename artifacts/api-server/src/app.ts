@@ -8,6 +8,7 @@ import connectPgSimple from "connect-pg-simple";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { bearerAuth } from "./middleware/bearerAuth";
+import { capturarErro } from "./lib/alertas";
 
 const app: Express = express();
 
@@ -237,7 +238,9 @@ app.use((err: unknown, req: express.Request, res: express.Response, _next: expre
     return;
   }
 
-  logger.error({ err, metodo: req.method, url: req.originalUrl }, "Erro não tratado");
+  // capturarErro já registra no log e decide sozinho se avisa por e-mail.
+  // Não é aguardado: a resposta ao cliente não deve esperar o envio.
+  void capturarErro(err, { metodo: req.method, url: req.originalUrl });
 
   if (res.headersSent) return;
 

@@ -2,6 +2,7 @@ import app from "./app";
 import { runMigrations } from "@workspace/db/migrate";
 import { logger } from "./lib/logger";
 import { emailConfigurado } from "./lib/email";
+import { instalarCapturaGlobal } from "./lib/alertas";
 
 const rawPort = process.env["PORT"];
 
@@ -64,6 +65,9 @@ if (process.env.MERCADOPAGO_ACCESS_TOKEN) {
  * nova não sobe, então o efeito é o certo — o serviço continua funcionando com o
  * schema que combina com o código que está rodando.
  */
+// Antes de qualquer coisa: se a subida falhar, o aviso precisa funcionar.
+instalarCapturaGlobal();
+
 async function iniciar(): Promise<void> {
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL environment variable is required.");
