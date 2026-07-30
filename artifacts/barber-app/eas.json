@@ -22,7 +22,7 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api-production-3ceb.up.railway.app"
+        "EXPO_PUBLIC_API_URL": "https://barberrecall.com.br"
       }
     },
     "production": {
@@ -35,7 +35,7 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api-production-3ceb.up.railway.app"
+        "EXPO_PUBLIC_API_URL": "https://barberrecall.com.br"
       }
     }
   },
