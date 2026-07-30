@@ -91,7 +91,7 @@ function DispatchCard({
         "flex flex-col sm:flex-row sm:items-start gap-3 p-4 rounded-xl border transition-all",
         done
           ? "bg-muted/30 border-border/40 opacity-60"
-          : "bg-card border-border shadow-sm hover:border-primary/30"
+          : "bg-card border-border hover:border-primary/30"
       )}
     >
       {/* Avatar */}
@@ -127,7 +127,7 @@ function DispatchCard({
       {/* Action */}
       <div className="flex-shrink-0 self-center">
         {done ? (
-          <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
             <CheckCircle2 className="h-4 w-4" />
             Enviado
           </div>
@@ -231,16 +231,17 @@ export default function CampaignsPage() {
     }
   };
 
+  // Tipos de campanha se distinguem pelo ícone e pelo rótulo, não por matiz.
   const getTypeInfo = (tipo: string) => {
     switch (tipo) {
       case "return":
-        return { icon: CalendarClock, label: "Retorno", color: "text-blue-500", bg: "bg-blue-500/10" };
+        return { icon: CalendarClock, label: "Retorno", color: "text-foreground", bg: "bg-muted" };
       case "birthday":
-        return { icon: Gift, label: "Aniversário", color: "text-purple-500", bg: "bg-purple-500/10" };
+        return { icon: Gift, label: "Aniversário", color: "text-foreground", bg: "bg-muted" };
       case "loyalty":
-        return { icon: Zap, label: "Fidelidade", color: "text-amber-500", bg: "bg-amber-500/10" };
+        return { icon: Zap, label: "Fidelidade", color: "text-foreground", bg: "bg-muted" };
       default:
-        return { icon: MessageSquare, label: "Customizada", color: "text-primary", bg: "bg-primary/10" };
+        return { icon: MessageSquare, label: "Customizada", color: "text-foreground", bg: "bg-muted" };
     }
   };
 
@@ -270,15 +271,15 @@ export default function CampaignsPage() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-              <Send className="h-4 w-4 text-green-600" />
+            <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
+              <Send className="h-4 w-4 text-foreground" />
             </div>
             <div>
               <h2 className="font-semibold text-base leading-tight">Disparos de hoje</h2>
               <p className="text-xs text-muted-foreground">Clientes que precisam de contato agora</p>
             </div>
             {pendingDispatches.length > 0 && (
-              <Badge className="bg-green-500 text-white text-xs ml-1">
+              <Badge className="bg-foreground text-background text-xs ml-1 border-transparent">
                 {pendingDispatches.length}
               </Badge>
             )}
@@ -296,7 +297,7 @@ export default function CampaignsPage() {
         </div>
 
         {generatingCount !== null && generatingCount > 0 && (
-          <div className="mb-3 text-xs text-green-700 bg-green-500/10 rounded-lg px-3 py-2 border border-green-500/20">
+          <div className="mb-3 text-xs text-foreground bg-muted rounded-lg px-3 py-2 border border-border">
             ✓ {generatingCount} novo{generatingCount > 1 ? "s disparo(s)" : " disparo"} gerado{generatingCount > 1 ? "s" : ""} hoje
           </div>
         )}
@@ -332,7 +333,7 @@ export default function CampaignsPage() {
           {sentDispatches.length > 0 && (
             <div className="border-t border-border/40 px-4 py-2.5 bg-muted/20">
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-foreground" />
                 {sentDispatches.length} enviado{sentDispatches.length > 1 ? "s" : ""} hoje
               </p>
             </div>
@@ -359,7 +360,7 @@ export default function CampaignsPage() {
             ))}
           </div>
         ) : campaigns?.length === 0 ? (
-          <div className="text-center py-16 bg-card border border-border/60 rounded-xl shadow-sm">
+          <div className="text-center py-16 bg-card border border-border rounded-xl">
             <Smartphone className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
             <h2 className="text-xl font-bold mb-2">Nenhuma campanha configurada</h2>
             <p className="text-muted-foreground max-w-md mx-auto mb-6 text-sm px-4">
@@ -379,10 +380,10 @@ export default function CampaignsPage() {
                 <Card
                   key={campaign.id}
                   className={cn(
-                    "flex flex-col border-border/60 shadow-sm transition-all duration-200",
+                    "flex flex-col border border-border transition-colors duration-200",
                     !campaign.ativo
                       ? "opacity-75 grayscale-[0.3]"
-                      : "hover:border-primary/50"
+                      : "hover:border-foreground/30"
                   )}
                 >
                   <CardHeader className="pb-3">

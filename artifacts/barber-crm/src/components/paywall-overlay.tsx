@@ -226,7 +226,7 @@ export function PaywallOverlay({ onSubscribed, onDismiss }: PaywallOverlayProps)
 
               <div className="w-full space-y-3">
                 <Button
-                  className="w-full h-[52px] rounded-xl text-sm font-semibold gap-2.5"
+                  className="w-full h-[52px] rounded-full text-sm font-semibold gap-2.5"
                   onClick={handlePix}
                   disabled={loadingPix || loadingCard}
                 >
@@ -236,7 +236,7 @@ export function PaywallOverlay({ onSubscribed, onDismiss }: PaywallOverlayProps)
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full h-12 rounded-xl text-sm font-medium gap-2.5"
+                  className="w-full h-12 rounded-full text-sm font-medium gap-2.5"
                   onClick={handleCard}
                   disabled={loadingPix || loadingCard}
                 >
@@ -268,8 +268,8 @@ export function PaywallOverlay({ onSubscribed, onDismiss }: PaywallOverlayProps)
                   animate={{ scale: 1, opacity: 1 }}
                   className="flex flex-col items-center gap-4 py-8"
                 >
-                  <div className="h-20 w-20 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <CheckCircle2 className="h-10 w-10 text-green-500" />
+                  <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
+                    <CheckCircle2 className="h-10 w-10 text-foreground" />
                   </div>
                   <h3 className="text-xl font-bold">Pagamento confirmado!</h3>
                   <p className="text-muted-foreground text-sm flex items-center gap-1.5">
@@ -294,7 +294,7 @@ export function PaywallOverlay({ onSubscribed, onDismiss }: PaywallOverlayProps)
                     {pixFailReason ?? "Ocorreu um erro no pagamento."}
                   </p>
                   <Button
-                    className="mt-2 w-full rounded-xl"
+                    className="mt-2 w-full rounded-full"
                     onClick={() => {
                       setPixStatus("pending");
                       setPixFailReason(null);
@@ -349,7 +349,7 @@ export function PaywallOverlay({ onSubscribed, onDismiss }: PaywallOverlayProps)
                     className="w-full gap-2 mb-5"
                     onClick={copyCode}
                   >
-                    {copied ? <><Check className="h-4 w-4 text-green-500" /> Código copiado!</> : <><Copy className="h-4 w-4" /> Copiar código</>}
+                    {copied ? <><Check className="h-4 w-4 text-foreground" /> Código copiado!</> : <><Copy className="h-4 w-4" /> Copiar código</>}
                   </Button>
 
                   {/* Polling indicator */}

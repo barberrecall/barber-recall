@@ -67,7 +67,7 @@ export default function ClientNewPage() {
         </div>
       </div>
 
-      <Card className="border-border/60 shadow-sm">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-primary" />

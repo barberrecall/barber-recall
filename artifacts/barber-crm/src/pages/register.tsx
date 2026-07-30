@@ -131,7 +131,7 @@ export default function RegisterPage() {
 
           <Button
             type="submit"
-            className="w-full h-14 rounded-2xl text-base font-semibold gap-2 mt-2"
+            className="w-full h-14 rounded-full text-base font-semibold gap-2 mt-2"
             disabled={isLoading}
           >
             {isLoading ? "Criando conta..." : (

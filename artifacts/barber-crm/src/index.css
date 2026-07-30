@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -57,16 +56,18 @@
   --color-sidebar-accent-border: var(--sidebar-accent-border);
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  --font-sans: 'Plus Jakarta Sans', sans-serif;
-  --font-mono: 'Spline Sans Mono', monospace;
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 12px);
+  --radius-md: calc(var(--radius) - 6px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 6px);
 }
 
-/* LIGHT MODE */
+/*
+ * Paleta monocromática, espelhando artifacts/barber-app/tailwind.config.js:
+ * canvas/surface/hero/ink/hairline. Sem cor de marca, sem modo escuro global —
+ * o único bloco escuro é o de baixo, reaproveitado apenas na tela de login via
+ * uma classe `dark` local (não pelo ThemeProvider, que foi removido).
+ */
 :root {
   --button-outline: rgba(0, 0, 0, 0.1);
   --badge-outline: rgba(0, 0, 0, 0.05);
@@ -75,54 +76,66 @@
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.08);
 
-  --background: 0 0% 98%;
-  --foreground: 224 71% 4%;
-  --border: 214 32% 91%;
-  
+  /* canvas #F1F2F4 */
+  --background: 220 13% 95%;
+  /* ink #0A0A0B */
+  --foreground: 240 5% 4%;
+  /* hairline #E6E6EA */
+  --border: 240 9% 91%;
+
+  /* surface #FFFFFF */
   --card: 0 0% 100%;
-  --card-foreground: 224 71% 4%;
-  --card-border: 214 32% 91%;
+  --card-foreground: 240 5% 4%;
+  --card-border: 240 9% 91%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 224 71% 4%;
-  --popover-border: 214 32% 91%;
+  --popover-foreground: 240 5% 4%;
+  --popover-border: 240 9% 91%;
 
-  --primary: 38 92% 50%; /* Amber */
-  --primary-foreground: 224 71% 4%;
-  
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
+  /* hero #141416 */
+  --primary: 240 6% 8%;
+  --primary-foreground: 0 0% 100%;
 
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
+  /* field #F4F5F7 */
+  --secondary: 220 16% 96%;
+  --secondary-foreground: 240 5% 4%;
 
-  --accent: 210 40% 96%;
-  --accent-foreground: 222 47% 11%;
+  --muted: 220 16% 96%;
+  /* ink-muted #8A8A8F */
+  --muted-foreground: 240 2% 55%;
+
+  --accent: 220 16% 96%;
+  --accent-foreground: 240 5% 4%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
 
-  --input: 214 32% 91%;
-  --ring: 38 92% 50%;
+  /* mesma cor do field: some com o fundo, os inputs do app não têm borda visível */
+  --input: 220 16% 96%;
+  --ring: 240 6% 8%;
 
-  --chart-1: 38 92% 50%;
-  --chart-2: 217 91% 60%;
-  --chart-3: 142 71% 45%;
-  --chart-4: 0 84% 60%;
-  --chart-5: 270 50% 40%;
+  /* rampa de cinza para gráficos, sem matiz: mais escuro = série principal */
+  --chart-1: 240 6% 8%;
+  --chart-2: 240 5% 30%;
+  --chart-3: 240 4% 50%;
+  --chart-4: 240 3% 68%;
+  --chart-5: 240 2% 82%;
 
-  --sidebar: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-border: 240 5.9% 90%;
-  --sidebar-primary: 38 92% 50%;
-  --sidebar-primary-foreground: 224 71% 4%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-ring: 38 92% 50%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 240 5% 4%;
+  --sidebar-border: 240 9% 91%;
+  --sidebar-primary: 240 6% 8%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 16% 96%;
+  --sidebar-accent-foreground: 240 5% 4%;
+  --sidebar-ring: 240 6% 8%;
 
-  --radius: 0.5rem;
+  /* raios maiores, para lembrar os 16-24px do app (card/field) */
+  --radius: 1.25rem;
 }
 
+/* "Night": paleta invertida do login do app (#1A1A1C / #2C2C2F). Aplicada só
+ * via classe `dark` no container da tela de login — não há alternância global. */
 .dark {
   --button-outline: rgba(255, 255, 255, 0.1);
   --badge-outline: rgba(255, 255, 255, 0.05);
@@ -131,51 +144,38 @@
   --elevate-1: rgba(255, 255, 255, 0.04);
   --elevate-2: rgba(255, 255, 255, 0.09);
 
-  /* Midnight Navy base */
-  --background: 224 71% 4%;
-  --foreground: 210 40% 98%;
-  --border: 220 20% 14%;
+  /* night #1A1A1C */
+  --background: 240 4% 11%;
+  --foreground: 0 0% 100%;
+  --border: 240 3% 22%;
 
-  --card: 224 40% 7%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 220 20% 14%;
+  /* night-field #2C2C2F */
+  --card: 240 3% 18%;
+  --card-foreground: 0 0% 100%;
+  --card-border: 240 3% 22%;
 
-  --popover: 224 40% 7%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 220 20% 14%;
+  --popover: 240 3% 18%;
+  --popover-foreground: 0 0% 100%;
+  --popover-border: 240 3% 22%;
 
-  --primary: 38 92% 50%; /* Amber */
-  --primary-foreground: 224 71% 4%;
-  
-  --secondary: 220 20% 12%;
-  --secondary-foreground: 210 40% 98%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 240 4% 11%;
 
-  --muted: 220 20% 12%;
-  --muted-foreground: 215 20% 65%;
+  --secondary: 240 3% 18%;
+  --secondary-foreground: 0 0% 100%;
 
-  --accent: 220 20% 16%;
-  --accent-foreground: 210 40% 98%;
+  --muted: 240 3% 18%;
+  /* night-muted #8A8A8F */
+  --muted-foreground: 240 2% 55%;
+
+  --accent: 240 3% 22%;
+  --accent-foreground: 0 0% 100%;
 
   --destructive: 0 62% 30%;
   --destructive-foreground: 210 40% 98%;
 
-  --input: 220 20% 16%;
-  --ring: 38 92% 50%;
-
-  --chart-1: 38 92% 50%;
-  --chart-2: 217 91% 60%;
-  --chart-3: 142 71% 45%;
-  --chart-4: 0 84% 60%;
-  --chart-5: 270 50% 40%;
-
-  --sidebar: 224 71% 4%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 220 20% 14%;
-  --sidebar-primary: 38 92% 50%;
-  --sidebar-primary-foreground: 224 71% 4%;
-  --sidebar-accent: 220 20% 12%;
-  --sidebar-accent-foreground: 240 4.8% 95.9%;
-  --sidebar-ring: 38 92% 50%;
+  --input: 240 3% 18%;
+  --ring: 0 0% 100%;
 }
 
 @layer base {

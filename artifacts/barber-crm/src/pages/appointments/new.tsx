@@ -130,7 +130,7 @@ export default function AppointmentNewPage() {
         </div>
       </div>
 
-      <Card className="border-border/60 shadow-sm">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-primary" />
@@ -259,9 +259,9 @@ export default function AppointmentNewPage() {
                     name="valorFinal"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-emerald-500 font-bold">Total Final</FormLabel>
+                        <FormLabel className="text-foreground font-bold">Total Final</FormLabel>
                         <FormControl>
-                          <Input type="number" disabled className="bg-emerald-500/10 border-emerald-500/30 text-emerald-500 font-bold" {...field} />
+                          <Input type="number" disabled className="bg-muted border-none text-foreground font-bold" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

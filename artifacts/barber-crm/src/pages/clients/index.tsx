@@ -39,21 +39,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 
-const AVATAR_COLORS = [
-  "bg-blue-500/20 text-blue-400",
-  "bg-violet-500/20 text-violet-400",
-  "bg-emerald-500/20 text-emerald-400",
-  "bg-amber-500/20 text-amber-400",
-  "bg-rose-500/20 text-rose-400",
-  "bg-cyan-500/20 text-cyan-400",
-  "bg-orange-500/20 text-orange-400",
-  "bg-pink-500/20 text-pink-400",
-];
-function avatarColor(name: string) {
-  let n = 0;
-  for (let i = 0; i < name.length; i++) n += name.charCodeAt(i);
-  return AVATAR_COLORS[n % AVATAR_COLORS.length];
-}
+// Avatar sempre no mesmo tom escuro, como o Avatar do app — sem rotação de
+// cor por nome, a identidade vem do contraste, não da matiz.
+const AVATAR_CLASS = "bg-primary text-primary-foreground";
 
 export default function ClientsPage() {
   const [search, setSearch] = useState("");
@@ -70,14 +58,16 @@ export default function ClientsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Status por valor, não por cor: mais escuro = mais urgente, mais claro =
+  // resolvido — mesma escala do app (status.risk/waiting/active).
   const getStatusBadge = (status: ClientStatus) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20">Ativo</Badge>;
+        return <Badge className="bg-muted text-muted-foreground hover:bg-muted border-transparent">Ativo</Badge>;
       case 'awaiting_return':
-        return <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-amber-500/20">Aguardando Retorno</Badge>;
+        return <Badge className="bg-muted-foreground/20 text-foreground hover:bg-muted-foreground/25 border-transparent">Aguardando Retorno</Badge>;
       case 'at_risk':
-        return <Badge className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20">Em Risco</Badge>;
+        return <Badge className="bg-foreground text-background hover:bg-foreground/90 border-transparent">Em Risco</Badge>;
     }
   };
 
@@ -152,9 +142,9 @@ export default function ClientsPage() {
         ) : (
           clients?.map((client) => (
             <Link key={client.id} href={`/clients/${client.id}`}>
-              <Card className="border-border/60 active:scale-[0.99] transition-transform cursor-pointer hover:border-primary/40">
+              <Card className="active:scale-[0.99] transition-transform cursor-pointer">
                 <CardContent className="p-4 flex items-center gap-3">
-                  <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${avatarColor(client.nome)}`}>
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${AVATAR_CLASS}`}>
                     {client.nome.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -202,8 +192,8 @@ export default function ClientsPage() {
       </div>
 
       {/* ── Desktop table ── */}
-      <Card className="hidden md:flex flex-col flex-1 border-border/60 shadow-sm min-h-0">
-        <div className="p-4 border-b border-border/60 flex flex-col sm:flex-row gap-4 hidden" />
+      <Card className="hidden md:flex flex-col flex-1 min-h-0">
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-4 hidden" />
         <div className="flex-1 overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10 shadow-[0_1px_0_0_hsl(var(--border)/0.6)]">
@@ -246,7 +236,7 @@ export default function ClientsPage() {
                   <TableRow key={client.id} className="group">
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-3">
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${avatarColor(client.nome)}`}>
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${AVATAR_CLASS}`}>
                           {client.nome.charAt(0).toUpperCase()}
                         </div>
                         <span>{client.nome}</span>

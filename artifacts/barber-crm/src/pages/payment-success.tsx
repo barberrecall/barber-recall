@@ -26,8 +26,8 @@ export default function PaymentSuccessPage() {
           <span>Barber Recall</span>
         </div>
 
-        <div className="h-20 w-20 rounded-full bg-emerald-500/15 flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+        <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 className="h-10 w-10 text-foreground" />
         </div>
 
         <h1 className="text-2xl font-bold mb-2">Pagamento confirmado!</h1>

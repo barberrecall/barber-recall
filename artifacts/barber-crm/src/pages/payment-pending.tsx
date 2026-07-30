@@ -19,8 +19,8 @@ export default function PaymentPendingPage() {
           <span>Barber Recall</span>
         </div>
 
-        <div className="h-20 w-20 rounded-full bg-amber-500/15 flex items-center justify-center mx-auto mb-6">
-          <Clock className="h-10 w-10 text-amber-500" />
+        <div className="h-20 w-20 rounded-full bg-muted-foreground/15 flex items-center justify-center mx-auto mb-6">
+          <Clock className="h-10 w-10 text-foreground" />
         </div>
 
         <h1 className="text-2xl font-bold mb-2">Pagamento em processamento</h1>

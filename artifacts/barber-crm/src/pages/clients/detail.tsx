@@ -26,12 +26,13 @@ export default function ClientDetailPage() {
   const { data: client, isLoading: clientLoading } = useGetClient(clientId, { query: { enabled: !!clientId, queryKey: getGetClientQueryKey(clientId) } });
   const { data: appointments, isLoading: apptsLoading } = useGetClientAppointments(clientId, { query: { enabled: !!clientId, queryKey: getGetClientAppointmentsQueryKey(clientId) } });
 
+  // Status por valor, não por cor — mesma escala usada na listagem de clientes.
   const getStatusBadge = (status?: ClientStatus) => {
     if (!status) return null;
     switch (status) {
-      case 'active': return <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-3 py-0.5">Ativo</Badge>;
-      case 'awaiting_return': return <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 px-3 py-0.5">Aguardando Retorno</Badge>;
-      case 'at_risk': return <Badge className="bg-red-500/10 text-red-500 border-red-500/20 px-3 py-0.5">Em Risco</Badge>;
+      case 'active': return <Badge className="bg-muted text-muted-foreground border-transparent px-3 py-0.5">Ativo</Badge>;
+      case 'awaiting_return': return <Badge className="bg-muted-foreground/20 text-foreground border-transparent px-3 py-0.5">Aguardando Retorno</Badge>;
+      case 'at_risk': return <Badge className="bg-foreground text-background border-transparent px-3 py-0.5">Em Risco</Badge>;
     }
   };
 
@@ -60,7 +61,7 @@ export default function ClientDetailPage() {
           </Button>
           <Button
             size="sm"
-            className="flex-1 sm:flex-none bg-[#25D366] hover:bg-[#1EBE5D] text-white"
+            className="flex-1 sm:flex-none"
             onClick={() => {
               if (!client?.telefone) return;
               const digits = client.telefone.replace(/\D/g, "");
@@ -80,7 +81,7 @@ export default function ClientDetailPage() {
       {/* Profile + History */}
       <div className="grid md:grid-cols-3 gap-4 md:gap-6">
         {/* Info Card */}
-        <Card className="md:col-span-1 border-border/60 shadow-sm h-fit">
+        <Card className="md:col-span-1 h-fit">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <User className="h-4 w-4 text-primary" />
@@ -132,7 +133,7 @@ export default function ClientDetailPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 border-t border-border/60 pt-4">
+                <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
                   <div>
                     <p className="text-xs text-muted-foreground">Total de Visitas</p>
                     <p className="text-2xl font-bold">{client?.totalVisitas}</p>
@@ -144,7 +145,7 @@ export default function ClientDetailPage() {
                 </div>
 
                 {client?.observacoes && (
-                  <div className="border-t border-border/60 pt-4">
+                  <div className="border-t border-border pt-4">
                     <p className="text-xs text-muted-foreground mb-2">Observações</p>
                     <p className="text-sm bg-secondary/50 p-3 rounded-md border border-border/40">
                       {client.observacoes}
@@ -157,7 +158,7 @@ export default function ClientDetailPage() {
         </Card>
 
         {/* Appointments History */}
-        <Card className="md:col-span-2 border-border/60 shadow-sm">
+        <Card className="md:col-span-2">
           <CardHeader className="pb-3 flex flex-row items-start sm:items-center justify-between gap-2">
             <div>
               <CardTitle className="text-base flex items-center gap-2">
@@ -183,7 +184,7 @@ export default function ClientDetailPage() {
                 <p className="text-sm">Nenhum atendimento registrado.</p>
               </div>
             ) : (
-              <div className="relative border-l-2 border-border/60 ml-3 pl-5 space-y-6 py-2">
+              <div className="relative border-l-2 border-border ml-3 pl-5 space-y-6 py-2">
                 {appointments?.map((appt) => (
                   <div key={appt.id} className="relative">
                     <div className="absolute -left-[27px] top-1 h-3 w-3 rounded-full border-2 border-primary bg-background ring-4 ring-background" />
@@ -204,7 +205,7 @@ export default function ClientDetailPage() {
                         )}
                       </div>
                       <div className="text-left sm:text-right flex-shrink-0">
-                        <div className="font-bold text-emerald-500 text-sm">R$ {appt.valorFinal.toFixed(2)}</div>
+                        <div className="font-bold text-foreground text-sm">R$ {appt.valorFinal.toFixed(2)}</div>
                         {appt.desconto && appt.desconto > 0 ? (
                           <div className="text-xs text-muted-foreground line-through">R$ {appt.valor.toFixed(2)}</div>
                         ) : null}

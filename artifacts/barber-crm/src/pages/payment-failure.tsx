@@ -19,8 +19,8 @@ export default function PaymentFailurePage() {
           <span>Barber Recall</span>
         </div>
 
-        <div className="h-20 w-20 rounded-full bg-red-500/15 flex items-center justify-center mx-auto mb-6">
-          <XCircle className="h-10 w-10 text-red-500" />
+        <div className="h-20 w-20 rounded-full bg-foreground flex items-center justify-center mx-auto mb-6">
+          <XCircle className="h-10 w-10 text-background" />
         </div>
 
         <h1 className="text-2xl font-bold mb-2">Pagamento não concluído</h1>

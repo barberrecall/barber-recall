@@ -109,7 +109,7 @@ export default function AppointmentsPage() {
             </SelectContent>
           </Select>
         </div>
-        <Card className="col-span-2 md:col-span-1 border-border/60 shadow-sm bg-primary/5 border-primary/20">
+        <Card className="col-span-2 md:col-span-1 border border-primary/20 bg-primary/5">
           <CardContent className="p-3 flex flex-row md:flex-col items-center md:items-start justify-between md:justify-center h-full gap-1">
             <p className="text-xs font-medium text-primary">Faturamento do Dia</p>
             <div>
@@ -136,7 +136,7 @@ export default function AppointmentsPage() {
           </div>
         ) : (
           sorted?.map((appt) => (
-            <Card key={appt.id} className="border-border/60">
+            <Card key={appt.id} className="border border-border">
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="text-center flex-shrink-0 w-12">
                   <p className="text-base font-bold text-primary">{format(new Date(appt.data), "HH:mm")}</p>
@@ -152,7 +152,7 @@ export default function AppointmentsPage() {
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-emerald-500 text-sm">R$ {appt.valorFinal.toFixed(2)}</p>
+                  <p className="font-bold text-foreground text-sm">R$ {appt.valorFinal.toFixed(2)}</p>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-7 w-7 p-0 mt-1 ml-auto block">
@@ -173,7 +173,7 @@ export default function AppointmentsPage() {
       </div>
 
       {/* ── Desktop table ── */}
-      <Card className="hidden md:flex flex-col flex-1 border-border/60 shadow-sm min-h-0">
+      <Card className="hidden md:flex flex-col flex-1 min-h-0">
         <div className="flex-1 overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10 shadow-[0_1px_0_0_hsl(var(--border)/0.6)]">

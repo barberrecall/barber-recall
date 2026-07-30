@@ -28,7 +28,7 @@ export function ProBanner({ planExpiresAt, daysRemaining, onRenew }: ProBannerPr
 
   const bgClass = urgent
     ? "bg-destructive/10 border-destructive/20 text-destructive"
-    : "bg-orange-500/10 border-orange-500/20 text-orange-600";
+    : "bg-muted-foreground/10 border-muted-foreground/20 text-foreground";
 
   return (
     <div className={`flex items-center justify-between gap-2 px-3 py-2 border-b text-xs font-medium ${bgClass}`}>

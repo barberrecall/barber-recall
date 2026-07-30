@@ -46,16 +46,18 @@ export function TrialBanner({ trialStartsAt, onSubscribe }: TrialBannerProps) {
   const isLastDay = timeLeft.days === 0;
   const urgent = isLastDay && timeLeft.hours < 6;
 
+  // Status por valor: só o caso realmente urgente usa a cor de perigo. O
+  // aviso "último dia, mas ainda sem pressa" é neutro, não laranja.
   const bgClass = urgent
     ? "bg-destructive/10 border-destructive/20 text-destructive"
     : isLastDay
-    ? "bg-orange-500/10 border-orange-500/20 text-orange-500"
+    ? "bg-muted-foreground/10 border-muted-foreground/20 text-foreground"
     : "bg-primary/10 border-primary/20 text-primary";
 
   const unitClass = urgent
     ? "bg-destructive/15"
     : isLastDay
-    ? "bg-orange-500/15"
+    ? "bg-muted-foreground/15"
     : "bg-primary/15";
 
   return (

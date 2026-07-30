@@ -42,7 +42,7 @@ export default function ReportsPage() {
 
       <div className="grid md:grid-cols-2 gap-4 md:gap-6">
         {/* Revenue Chart */}
-        <Card className="border-border/60 shadow-sm">
+        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base md:text-lg">Receita x Atendimentos</CardTitle>
           </CardHeader>
@@ -55,25 +55,25 @@ export default function ReportsPage() {
                   <AreaChart data={revData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.25}/>
-                        <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.02}/>
+                        <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.2}/>
+                        <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0.02}/>
                       </linearGradient>
                       <linearGradient id="colorAppt" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#6366f1" stopOpacity={0.2}/>
-                        <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02}/>
+                        <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.15}/>
+                        <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.02}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
                     <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `R${v}`} />
                     <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }}
                       labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
                     />
                     <Legend wrapperStyle={{ fontSize: '12px' }} />
-                    <Area yAxisId="left" type="monotone" dataKey="revenue" name="Receita" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" dot={false} activeDot={{ r: 4, fill: '#f59e0b' }} />
-                    <Area yAxisId="right" type="monotone" dataKey="appointments" name="Atendimentos" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorAppt)" dot={false} activeDot={{ r: 4, fill: '#6366f1' }} />
+                    <Area yAxisId="left" type="monotone" dataKey="revenue" name="Receita" stroke="hsl(var(--chart-1))" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--chart-1))' }} />
+                    <Area yAxisId="right" type="monotone" dataKey="appointments" name="Atendimentos" stroke="hsl(var(--chart-3))" strokeWidth={2} fillOpacity={1} fill="url(#colorAppt)" dot={false} activeDot={{ r: 4, fill: 'hsl(var(--chart-3))' }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -82,7 +82,7 @@ export default function ReportsPage() {
         </Card>
 
         {/* Clients Chart */}
-        <Card className="border-border/60 shadow-sm">
+        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base md:text-lg">Aquisição e Retenção</CardTitle>
           </CardHeader>
@@ -93,17 +93,17 @@ export default function ReportsPage() {
               <div className="h-[220px] md:h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={clientData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
                     <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
                     <Tooltip
-                      cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+                      cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }}
                       labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
                     />
                     <Legend wrapperStyle={{ fontSize: '12px' }} />
-                    <Bar dataKey="novos" name="Novos Clientes" stackId="a" fill="#10b981" radius={[0, 0, 3, 3]} maxBarSize={40} />
-                    <Bar dataKey="recorrentes" name="Recorrentes" stackId="a" fill="#f59e0b" radius={[3, 3, 0, 0]} maxBarSize={40} />
+                    <Bar dataKey="novos" name="Novos Clientes" stackId="a" fill="hsl(var(--chart-1))" radius={[0, 0, 3, 3]} maxBarSize={40} />
+                    <Bar dataKey="recorrentes" name="Recorrentes" stackId="a" fill="hsl(var(--chart-4))" radius={[3, 3, 0, 0]} maxBarSize={40} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -117,7 +117,7 @@ export default function ReportsPage() {
 
 function StatCard({ title, value, icon: Icon, loading }: { title: string, value: string | number, icon: any, loading: boolean }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-secondary/20 p-3 md:p-5 flex flex-col justify-between gap-2 md:gap-3 shadow-sm">
+    <div className="rounded-xl border border-border bg-secondary/40 p-3 md:p-5 flex flex-col justify-between gap-2 md:gap-3">
       <div className="flex justify-between items-start">
         <p className="text-[11px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider leading-tight">{title}</p>
         <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">

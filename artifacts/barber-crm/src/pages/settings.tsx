@@ -20,7 +20,6 @@ const settingsSchema = z.object({
   cidade: z.string().min(2),
   whatsapp: z.string().optional(),
   instagram: z.string().optional(),
-  corPrimaria: z.string(),
   diasRetorno: z.string().transform(v => parseInt(v)),
   mensagemPadrao: z.string().optional()
 });
@@ -41,7 +40,6 @@ export default function SettingsPage() {
       cidade: "",
       whatsapp: "",
       instagram: "",
-      corPrimaria: "#F59E0B",
       diasRetorno: 30 as any,
       mensagemPadrao: ""
     }
@@ -56,7 +54,6 @@ export default function SettingsPage() {
         cidade: shop.cidade,
         whatsapp: shop.whatsapp || "",
         instagram: shop.instagram || "",
-        corPrimaria: shop.corPrimaria || "#F59E0B",
         diasRetorno: shop.diasRetorno as any || 30,
         mensagemPadrao: shop.mensagemPadrao || ""
       });
@@ -67,7 +64,6 @@ export default function SettingsPage() {
     updateBarbershop.mutate({ data }, {
       onSuccess: () => {
         toast({ title: "Configurações salvas", description: "As informações da barbearia foram atualizadas." });
-        document.documentElement.style.setProperty('--primary', data.corPrimaria);
       },
       onError: () => {
         toast({ title: "Erro", description: "Falha ao salvar configurações.", variant: "destructive" });
@@ -90,7 +86,7 @@ export default function SettingsPage() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 md:space-y-8">
           
           {/* Dados Básicos */}
-          <Card className="border-border/60 shadow-sm">
+          <Card>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                 <Store className="h-5 w-5 text-primary" />
@@ -128,7 +124,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Presença Digital */}
-          <Card className="border-border/60 shadow-sm">
+          <Card>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                 <MessageCircle className="h-5 w-5 text-primary" />
@@ -146,7 +142,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Preferências CRM */}
-          <Card className="border-border/60 shadow-sm">
+          <Card>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                 <Settings className="h-5 w-5 text-primary" />
@@ -161,16 +157,6 @@ export default function SettingsPage() {
                     <FormLabel>Dias para "Em Risco"</FormLabel>
                     <FormControl><Input type="number" {...field} /></FormControl>
                     <p className="text-xs text-muted-foreground mt-1">Após quantos dias sem visita um cliente entra em risco.</p>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="corPrimaria" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cor Principal (Accent)</FormLabel>
-                    <div className="flex gap-3">
-                      <FormControl><Input type="color" className="w-14 p-1 h-10 flex-shrink-0" {...field} /></FormControl>
-                      <Input value={field.value} onChange={field.onChange} className="font-mono uppercase" />
-                    </div>
                     <FormMessage />
                   </FormItem>
                 )} />

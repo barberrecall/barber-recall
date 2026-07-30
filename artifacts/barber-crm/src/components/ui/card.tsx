@@ -8,7 +8,8 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      'rounded-xl border bg-card text-card-foreground shadow',
+      // Cards do app não têm elevação, só contraste branco-sobre-cinza.
+      'rounded-xl border-0 bg-card text-card-foreground shadow-none',
       className,
     )}
     {...props}

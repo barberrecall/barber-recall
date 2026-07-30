@@ -16,7 +16,6 @@ import {
   X
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ModeToggle } from "@/components/mode-toggle"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useTrialStatus } from "@/hooks/use-trial-status"
 import { TrialBanner } from "@/components/trial-banner"
@@ -68,30 +67,27 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* ── Sidebar (Desktop only) ── */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card flex-shrink-0">
         <div className="h-16 flex items-center px-6 border-b border-border">
-          <Link href="/dashboard" className="flex items-center gap-2 text-primary font-bold text-lg">
+          <Link href="/dashboard" className="flex items-center gap-2 text-foreground font-bold text-lg">
             <Scissors className="h-5 w-5" />
             <span>Barber Recall</span>
           </Link>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-0.5">
           {navItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;
             return (
-              <Link 
-                key={item.href} 
+              <Link
+                key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium text-sm relative overflow-hidden",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-full transition-colors font-medium text-sm",
                   active
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                 )}
               >
-                {active && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
-                )}
                 <Icon className="h-4 w-4 flex-shrink-0" />
                 {item.label}
               </Link>
@@ -99,27 +95,23 @@ export function AppLayout({ children }: { children: ReactNode }) {
           })}
         </div>
 
-        <div className="p-4 border-t border-border flex items-center justify-between">
-          <button onClick={handleLogout} className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-secondary flex-1">
+        <div className="p-4 border-t border-border">
+          <button onClick={handleLogout} className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-secondary w-full">
             <LogOut className="h-4 w-4" />
             Sair
           </button>
-          <ModeToggle />
         </div>
       </aside>
 
       {/* ── Mobile Header ── */}
       <header className="md:hidden h-14 border-b border-border bg-card flex items-center justify-between px-4 sticky top-0 z-20">
-        <Link href="/dashboard" className="flex items-center gap-2 text-primary font-bold">
+        <Link href="/dashboard" className="flex items-center gap-2 text-foreground font-bold">
           <Scissors className="h-5 w-5" />
           <span>Barber Recall</span>
         </Link>
-        <div className="flex items-center gap-2">
-          <ModeToggle />
-          <button onClick={handleLogout} className="text-muted-foreground p-1.5">
-            <LogOut className="h-5 w-5" />
-          </button>
-        </div>
+        <button onClick={handleLogout} className="text-muted-foreground p-1.5">
+          <LogOut className="h-5 w-5" />
+        </button>
       </header>
 
       {/* ── Mobile Bottom Nav ── */}
@@ -134,11 +126,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 href={item.href}
                 className={cn(
                   "flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors",
-                  active ? "text-primary" : "text-muted-foreground"
+                  active ? "text-foreground" : "text-muted-foreground"
                 )}
               >
-                <Icon className="h-5 w-5" />
-                <span className="text-[10px] font-medium leading-none">{item.label}</span>
+                <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 2} />
+                <span className={cn("text-[10px] leading-none", active ? "font-bold" : "font-medium")}>{item.label}</span>
               </Link>
             );
           })}
@@ -148,10 +140,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
             onClick={() => setMoreOpen(true)}
             className={cn(
               "flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors",
-              moreIsActive ? "text-primary" : "text-muted-foreground"
+              moreIsActive ? "text-foreground" : "text-muted-foreground"
             )}
           >
-            <MoreHorizontal className="h-5 w-5" />
+            <MoreHorizontal className="h-5 w-5" strokeWidth={moreIsActive ? 2.5 : 2} />
             <span className="text-[10px] font-medium leading-none">Mais</span>
           </button>
         </div>
@@ -175,7 +167,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3.5 rounded-xl border font-medium text-sm transition-colors",
                     active
-                      ? "bg-primary/10 border-primary/30 text-primary"
+                      ? "bg-primary border-transparent text-primary-foreground"
                       : "border-border bg-secondary/40 text-foreground hover:bg-secondary"
                   )}
                 >

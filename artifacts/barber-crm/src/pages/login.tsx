@@ -38,7 +38,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+    // "dark" aqui não é um alternador de tema — é a única exceção escura do
+    // app, aplicada só a esta tela (mesmo padrão do login do app mobile).
+    <div className="dark min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -100,7 +102,7 @@ export default function LoginPage() {
 
           <Button
             type="submit"
-            className="w-full h-14 rounded-2xl text-base font-semibold gap-2"
+            className="w-full h-14 rounded-full text-base font-semibold gap-2"
             disabled={isLoading}
           >
             {isLoading ? "Entrando..." : (
@@ -117,17 +119,17 @@ export default function LoginPage() {
         </p>
       </form>
 
-        <p className="mt-8 text-sm text-muted-foreground">
+        <div className="mt-8 text-sm text-muted-foreground">
           <div className="text-center mb-3">
-          <a href="/esqueci-senha" className="text-sm text-muted-foreground underline">
-            Esqueci minha senha
-          </a>
-        </div>
-        Não tem conta?{" "}
+            <a href="/esqueci-senha" className="text-sm text-muted-foreground underline">
+              Esqueci minha senha
+            </a>
+          </div>
+          Não tem conta?{" "}
           <Link href="/register" className="text-foreground font-semibold hover:text-primary">
             Criar conta
           </Link>
-        </p>
+        </div>
       </motion.div>
     </div>
   );

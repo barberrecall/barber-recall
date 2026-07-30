@@ -51,12 +51,14 @@ export default function CouponsPage() {
     return { expired, fullyUsed, active };
   };
 
+  // Status por valor: expirado é o que mais pede atenção, por isso é o mais
+  // escuro — o resto usa os tons neutros já do sistema (secondary/muted).
   const StatusBadge = ({ coupon }: { coupon: NonNullable<typeof coupons>[0] }) => {
     const { active, expired, fullyUsed } = getCouponStatus(coupon);
     if (!coupon.ativo) return <Badge variant="secondary">Inativo</Badge>;
-    if (expired) return <Badge className="bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20">Expirado</Badge>;
+    if (expired) return <Badge className="bg-foreground text-background border-transparent hover:bg-foreground/90">Expirado</Badge>;
     if (fullyUsed) return <Badge variant="secondary">Esgotado</Badge>;
-    return <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20">Ativo</Badge>;
+    return <Badge className="bg-muted text-muted-foreground border-transparent hover:bg-muted">Ativo</Badge>;
   };
 
   return (
@@ -88,7 +90,7 @@ export default function CouponsPage() {
           coupons?.map((coupon) => {
             const { active, expired } = getCouponStatus(coupon);
             return (
-              <Card key={coupon.id} className={`border-border/60 ${!active ? "opacity-60" : ""}`}>
+              <Card key={coupon.id} className={!active ? "opacity-60" : ""}>
                 <CardContent className="p-4 flex items-start gap-3">
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -106,7 +108,7 @@ export default function CouponsPage() {
                       </span>
                     </div>
                     {coupon.validade && (
-                      <p className={`text-xs flex items-center gap-1 ${expired ? "text-destructive" : "text-muted-foreground"}`}>
+                      <p className={`text-xs flex items-center gap-1 ${expired ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                         {expired && <CalendarX2 className="h-3 w-3" />}
                         Válido até {format(new Date(coupon.validade), "dd/MM/yyyy")}
                       </p>
@@ -131,7 +133,7 @@ export default function CouponsPage() {
       </div>
 
       {/* ── Desktop table ── */}
-      <Card className="hidden md:flex flex-col flex-1 border-border/60 shadow-sm min-h-0">
+      <Card className="hidden md:flex flex-col flex-1 min-h-0">
         <div className="flex-1 overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10 shadow-[0_1px_0_0_hsl(var(--border)/0.6)]">
@@ -191,7 +193,7 @@ export default function CouponsPage() {
                       </TableCell>
                       <TableCell>
                         {coupon.validade ? (
-                          <span className={`flex items-center gap-1.5 ${expired ? 'text-destructive' : ''}`}>
+                          <span className={`flex items-center gap-1.5 ${expired ? 'text-foreground font-medium' : ''}`}>
                             {expired && <CalendarX2 className="h-3 w-3" />}
                             {format(new Date(coupon.validade), "dd/MM/yyyy")}
                           </span>

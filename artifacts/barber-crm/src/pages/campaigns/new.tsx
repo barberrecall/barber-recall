@@ -107,7 +107,7 @@ export default function CampaignNewPage() {
 
       <div className="grid md:grid-cols-5 gap-6">
         <div className="md:col-span-3 space-y-6">
-          <Card className="border-border/60 shadow-sm">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-primary" />
@@ -226,7 +226,7 @@ export default function CampaignNewPage() {
         </div>
 
         <div className="md:col-span-2 space-y-6">
-          <Card className="border-border/60 shadow-sm bg-secondary/20 h-fit sticky top-20">
+          <Card className="bg-secondary/20 h-fit sticky top-20">
             <CardHeader className="pb-4 border-b border-border/40">
               <CardTitle className="text-base flex items-center gap-2">
                 <Smartphone className="h-4 w-4" />
