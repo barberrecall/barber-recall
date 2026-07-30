@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { descontoDoCupom, validarCupom, type Cupom } from "./cupom";
+import { descontoDoCupom, validarCupom, tipoValido, type Cupom } from "./cupom";
 
 /**
  * Cálculo de desconto é cálculo de dinheiro. Errar para menos irrita o cliente
@@ -112,5 +112,39 @@ describe("validarCupom", () => {
     const r = validarCupom(cupom({ tipo: "percent", valor: "25" }), 200, HOJE);
     assert.equal(r.ok, true);
     if (r.ok) assert.equal(r.desconto, 50);
+  });
+});
+
+describe("tipoValido", () => {
+  test("aceita os dois valores que o cálculo entende", () => {
+    assert.equal(tipoValido("percent", []), "percent");
+    assert.equal(tipoValido("fixed", []), "fixed");
+  });
+
+  test("ausente vira o padrão do produto, sem erro", () => {
+    const erros: string[] = [];
+    assert.equal(tipoValido(undefined, erros), "percent");
+    assert.deepEqual(erros, []);
+  });
+
+  test("maiúscula é recusada, não normalizada em silêncio", () => {
+    // O risco real: "Percent" passando despercebido e sendo tratado como
+    // "fixed" por descontoDoCupom — um cupom de 20% virando R$ 20,00 fixos.
+    const erros: string[] = [];
+    assert.equal(tipoValido("Percent", erros), undefined);
+    assert.equal(erros.length, 1);
+  });
+
+  test("valor arbitrário é recusado com mensagem", () => {
+    const erros: string[] = [];
+    assert.equal(tipoValido("qualquer-coisa", erros), undefined);
+    assert.match(erros[0]!, /percent, fixed/);
+  });
+
+  test("não-string é recusado sem lançar", () => {
+    for (const v of [null, 123, {}, [], true]) {
+      const erros: string[] = [];
+      assert.equal(tipoValido(v, erros), undefined, `deveria recusar: ${JSON.stringify(v)}`);
+    }
   });
 });

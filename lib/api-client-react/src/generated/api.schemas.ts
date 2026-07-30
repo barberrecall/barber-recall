@@ -314,6 +314,8 @@ export interface CouponInput {
   valor: number;
   validade?: string;
   usoMaximo?: number;
+  /** Nenhuma tela cria um cupom já desativado hoje — o fluxo do produto é criar ativo e desativar depois, na listagem. Aceito mesmo assim porque o servidor deve honrar o que o contrato promete, mesmo para quem integrar por fora das telas. */
+  ativo?: boolean;
 }
 
 export type CouponUpdateTipo = typeof CouponUpdateTipo[keyof typeof CouponUpdateTipo];

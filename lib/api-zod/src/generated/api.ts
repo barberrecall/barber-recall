@@ -628,12 +628,15 @@ export const ListCouponsResponse = zod.array(ListCouponsResponseItem)
 /**
  * @summary Create a coupon
  */
+export const createCouponBodyAtivoDefault = true;
+
 export const CreateCouponBody = zod.object({
   "codigo": zod.string().optional(),
   "tipo": zod.enum(['percent', 'fixed']),
   "valor": zod.number(),
   "validade": zod.coerce.date().optional(),
-  "usoMaximo": zod.number().optional()
+  "usoMaximo": zod.number().optional(),
+  "ativo": zod.boolean().default(createCouponBodyAtivoDefault).describe('Nenhuma tela cria um cupom já desativado hoje — o fluxo do produto é criar ativo e desativar depois, na listagem. Aceito mesmo assim porque o servidor deve honrar o que o contrato promete, mesmo para quem integrar por fora das telas.\n')
 })
 
 export const CreateCouponResponse = zod.object({

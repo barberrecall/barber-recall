@@ -21,6 +21,33 @@ export type ResultadoCupom =
   | { ok: true; desconto: number }
   | { ok: false; motivo: string };
 
+export const TIPOS_VALIDOS = ["percent", "fixed"] as const;
+export type TipoCupom = (typeof TIPOS_VALIDOS)[number];
+
+/**
+ * Valida `tipo` contra os dois valores que `descontoDoCupom` entende.
+ *
+ * Sem esta checagem, qualquer string passava direto para a coluna — "Percent"
+ * com maiúscula, um erro de digitação, um cliente de API diferente do nosso.
+ * `descontoDoCupom` trata qualquer coisa que não seja exatamente "percent"
+ * como desconto fixo, então um cupom pensado como 20% viraria R$ 20,00 de
+ * desconto fixo, sem erro nenhum avisando — o barbeiro só perceberia ao ver o
+ * valor errado sair no balcão.
+ *
+ * `undefined` na entrada devolve o padrão do produto ("percent"), não erro:
+ * é o comportamento que já existia antes desta validação existir, e as telas
+ * de criação sempre mandavam o campo mesmo assim.
+ */
+export function tipoValido(
+  tipo: unknown,
+  errors: string[],
+): TipoCupom | undefined {
+  if (tipo === undefined) return "percent";
+  if (tipo === "percent" || tipo === "fixed") return tipo;
+  errors.push(`tipo deve ser um de: ${TIPOS_VALIDOS.join(", ")}.`);
+  return undefined;
+}
+
 /**
  * Desconto que o cupom concede sobre um valor.
  *
