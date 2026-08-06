@@ -21,6 +21,12 @@ import AppointmentsPage from '@/pages/appointments';
 import AppointmentNewPage from '@/pages/appointments/new';
 import CampaignsPage from '@/pages/campaigns';
 import CampaignNewPage from '@/pages/campaigns/new';
+import BarbersPage from '@/pages/barbers';
+import BarberNewPage from '@/pages/barbers/new';
+import BarberEditPage from '@/pages/barbers/edit';
+import ServicesPage from '@/pages/services';
+import ServiceNewPage from '@/pages/services/new';
+import ServiceEditPage from '@/pages/services/edit';
 import CouponsPage from '@/pages/coupons';
 import CouponNewPage from '@/pages/coupons/new';
 import ReportsPage from '@/pages/reports';
@@ -90,6 +96,24 @@ function AppRoutes() {
       </Route>
       <Route path="/campaigns/new">
         <ProtectedRoute><AppLayout><CampaignNewPage /></AppLayout></ProtectedRoute>
+      </Route>
+      <Route path="/barbers">
+        <ProtectedRoute><AppLayout><BarbersPage /></AppLayout></ProtectedRoute>
+      </Route>
+      <Route path="/barbers/new">
+        <ProtectedRoute><AppLayout><BarberNewPage /></AppLayout></ProtectedRoute>
+      </Route>
+      <Route path="/barbers/:id/edit">
+        <ProtectedRoute><AppLayout><BarberEditPage /></AppLayout></ProtectedRoute>
+      </Route>
+      <Route path="/services">
+        <ProtectedRoute><AppLayout><ServicesPage /></AppLayout></ProtectedRoute>
+      </Route>
+      <Route path="/services/new">
+        <ProtectedRoute><AppLayout><ServiceNewPage /></AppLayout></ProtectedRoute>
+      </Route>
+      <Route path="/services/:id/edit">
+        <ProtectedRoute><AppLayout><ServiceEditPage /></AppLayout></ProtectedRoute>
       </Route>
       <Route path="/coupons">
         <ProtectedRoute><AppLayout><CouponsPage /></AppLayout></ProtectedRoute>

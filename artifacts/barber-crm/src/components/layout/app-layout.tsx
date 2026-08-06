@@ -1,17 +1,18 @@
 import { ReactNode, useState } from "react"
 import { Link, useLocation } from "wouter"
 import { useAuth } from "@/contexts/auth-context"
-import { 
-  LayoutDashboard, 
-  Users, 
-  CalendarDays, 
-  MessageSquare, 
-  Ticket, 
-  BarChart3, 
-  Lightbulb, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  CalendarDays,
+  MessageSquare,
+  Ticket,
+  BarChart3,
+  Lightbulb,
+  Settings,
   LogOut,
   Scissors,
+  UserCog,
   MoreHorizontal,
   X
 } from "lucide-react"
@@ -27,6 +28,8 @@ const navItems = [
   { href: "/clients", label: "Clientes", icon: Users },
   { href: "/appointments", label: "Atendimentos", icon: CalendarDays },
   { href: "/campaigns", label: "Campanhas", icon: MessageSquare },
+  { href: "/barbers", label: "Barbeiros", icon: UserCog },
+  { href: "/services", label: "Serviços", icon: Scissors },
   { href: "/coupons", label: "Cupons", icon: Ticket },
   { href: "/reports", label: "Relatórios", icon: BarChart3 },
   { href: "/insights", label: "Insights IA", icon: Lightbulb },
