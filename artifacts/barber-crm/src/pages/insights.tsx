@@ -4,6 +4,7 @@ import { AlertCircle, ArrowUpRight, TrendingUp, CheckCircle2, Info, Banknote, Us
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { formatBRL } from "@/lib/money";
 
 export default function InsightsPage() {
   const { data, isLoading } = useGetInsights();
@@ -47,7 +48,7 @@ export default function InsightsPage() {
                   Receita Potencial a Recuperar
                 </div>
                 <div className="text-3xl md:text-5xl font-bold text-foreground mb-2">
-                  R$ {data.potentialRevenue.toFixed(2)}
+                  {formatBRL(data.potentialRevenue)}
                 </div>
                 <p className="text-muted-foreground text-sm max-w-sm">
                   Valor estimado se {data.clientesEmRisco} clientes em risco retornarem.
@@ -101,7 +102,7 @@ export default function InsightsPage() {
                       {insight.impacto && insight.impacto > 0 ? (
                         <div className="flex items-center gap-1 text-sm font-medium text-foreground mt-1.5">
                           <ArrowUpRight className="h-4 w-4" />
-                          +R$ {insight.impacto.toFixed(2)} estimado
+                          +{formatBRL(insight.impacto)} estimado
                         </div>
                       ) : null}
                     </div>

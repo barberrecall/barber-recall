@@ -5,6 +5,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianG
 import { Banknote, Users, Activity, Ticket, Clock, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
+import { formatBRL } from "@/lib/money";
 
 export default function ReportsPage() {
   const [period, setPeriod] = useState<"week" | "month" | "year">("month");
@@ -30,8 +31,8 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <StatCard loading={overLoading} title="Receita Média Diária" value={`R$ ${overview?.receitaDiaria?.toFixed(2) || '0.00'}`} icon={Banknote} />
-        <StatCard loading={overLoading} title="Ticket Médio" value={`R$ ${overview?.ticketMedio?.toFixed(2) || '0.00'}`} icon={TrendingUp} />
+        <StatCard loading={overLoading} title="Receita Média Diária" value={formatBRL(overview?.receitaDiaria ?? 0)} icon={Banknote} />
+        <StatCard loading={overLoading} title="Ticket Médio" value={formatBRL(overview?.ticketMedio ?? 0)} icon={TrendingUp} />
         <StatCard loading={overLoading} title="Novos / Recorrentes" value={`${overview?.clientesNovos || 0} / ${overview?.clientesRecorrentes || 0}`} icon={Users} />
         <StatCard loading={overLoading} title="Retorno Médio" value={`${overview?.tempoMedioRetorno || 0}d`} icon={Clock} />
         <StatCard loading={overLoading} title="Camp. Enviadas" value={overview?.campanhasEnviadas || 0} icon={Activity} />

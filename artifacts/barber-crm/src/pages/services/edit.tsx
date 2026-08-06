@@ -17,10 +17,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { ArrowLeft, Scissors, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MoneyInput } from "@/components/money-input";
+import { formatMoney, parseMoney } from "@/lib/money";
 
 const serviceSchema = z.object({
   nome: z.string().min(2, "Nome deve ter no mínimo 2 caracteres"),
-  valor: z.string().min(1, "Informe o valor"),
+  valor: z
+    .string()
+    .min(1, "Informe o valor")
+    .refine((v) => Number.isFinite(parseMoney(v)), "Valor inválido"),
   duracao: z.string().min(1, "Informe a duração"),
 });
 
@@ -50,7 +55,7 @@ export default function ServiceEditPage() {
     if (service) {
       form.reset({
         nome: service.nome,
-        valor: String(service.valor),
+        valor: formatMoney(service.valor),
         duracao: String(service.duracao),
       });
     }
@@ -63,7 +68,7 @@ export default function ServiceEditPage() {
     updateService.mutate(
       {
         id: serviceId,
-        data: { nome: data.nome, valor: parseFloat(data.valor), duracao: parseInt(data.duracao, 10) },
+        data: { nome: data.nome, valor: parseMoney(data.valor), duracao: parseInt(data.duracao, 10) },
       },
       {
         onSuccess: () => {
@@ -154,8 +159,8 @@ export default function ServiceEditPage() {
                   name="valor"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Valor (R$) *</FormLabel>
-                      <FormControl><Input type="number" step="0.01" min="0" {...field} /></FormControl>
+                      <FormLabel>Valor *</FormLabel>
+                      <FormControl><MoneyInput {...field} onChange={field.onChange} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

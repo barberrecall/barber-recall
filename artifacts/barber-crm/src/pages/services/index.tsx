@@ -20,6 +20,7 @@ import {
 import { Plus, Scissors, Trash2, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { formatBRL } from "@/lib/money";
 
 export default function ServicesPage() {
   const { data: services, isLoading } = useListServices();
@@ -82,7 +83,7 @@ export default function ServicesPage() {
                 <Link href={`/services/${service.id}/edit`} className="flex-1 min-w-0">
                   <p className="font-semibold text-sm truncate">{service.nome}</p>
                   <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-semibold text-foreground text-sm">R$ {service.valor.toFixed(2)}</span>
+                    <span className="font-semibold text-foreground text-sm">{formatBRL(service.valor)}</span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {service.duracao} min
@@ -149,7 +150,7 @@ export default function ServicesPage() {
                         {service.nome}
                       </Link>
                     </TableCell>
-                    <TableCell className="font-semibold">R$ {service.valor.toFixed(2)}</TableCell>
+                    <TableCell className="font-semibold">{formatBRL(service.valor)}</TableCell>
                     <TableCell>
                       <span className="flex items-center gap-1.5 text-muted-foreground">
                         <Clock className="h-3.5 w-3.5" />

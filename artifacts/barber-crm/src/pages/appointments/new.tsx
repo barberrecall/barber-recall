@@ -21,14 +21,28 @@ import { ArrowLeft, CalendarDays } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { MoneyInput } from "@/components/money-input";
+import { formatBRL, formatMoney, parseMoney } from "@/lib/money";
+
+/** Vazio conta como zero — o desconto em branco é o caso comum. */
+const semDesconto = (texto: string | undefined) =>
+  !texto || texto.trim() === "" ? 0 : parseMoney(texto);
 
 const appointmentSchema = z.object({
   clienteId: z.string().min(1, "Selecione um cliente"),
   barbeiroId: z.string().optional(),
   servicoId: z.string().optional(),
   data: z.string().min(1, "Selecione uma data e hora"),
-  valor: z.string().min(1, "Informe o valor"),
-  desconto: z.string().optional(),
+  // O valor era só `.min(1)`: qualquer texto passava e virava NaN no envio,
+  // que o servidor recusava com uma mensagem genérica de erro.
+  valor: z
+    .string()
+    .min(1, "Informe o valor")
+    .refine((v) => Number.isFinite(parseMoney(v)), "Valor inválido"),
+  desconto: z
+    .string()
+    .optional()
+    .refine((v) => Number.isFinite(semDesconto(v)), "Desconto inválido"),
   valorFinal: z.string(),
   observacoes: z.string().optional(),
   couponCode: z.string().optional()
@@ -56,9 +70,11 @@ export default function AppointmentNewPage() {
       barbeiroId: "",
       servicoId: "",
       data: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-      valor: "0",
-      desconto: "0",
-      valorFinal: "0",
+      // Vazio, não "0": com o zero preenchido, digitar 45 produzia "045" na
+      // tela, porque o cursor cai depois do que já está lá.
+      valor: "",
+      desconto: "",
+      valorFinal: "",
       observacoes: "",
       couponCode: ""
     }
@@ -73,17 +89,22 @@ export default function AppointmentNewPage() {
     if (selectedServiceId && services) {
       const service = services.find(s => s.id.toString() === selectedServiceId);
       if (service) {
-        form.setValue("valor", service.valor.toString());
+        form.setValue("valor", formatMoney(service.valor));
       }
     }
   }, [selectedServiceId, services, form]);
 
   // Auto-calculate final price
   useEffect(() => {
-    const v = parseFloat(valor || "0");
-    const d = parseFloat(desconto || "0");
-    const final = Math.max(0, v - d);
-    form.setValue("valorFinal", final.toString());
+    const v = parseMoney(valor);
+    const d = semDesconto(desconto);
+    // Enquanto o valor está pela metade ("45,") a leitura falha; mostrar o
+    // total zerado é melhor do que "NaN" piscando no campo a cada tecla.
+    const final = Math.max(
+      0,
+      (Number.isFinite(v) ? v : 0) - (Number.isFinite(d) ? d : 0),
+    );
+    form.setValue("valorFinal", formatMoney(final));
   }, [valor, desconto, form]);
 
   const onSubmit = (data: FormValues) => {
@@ -92,9 +113,12 @@ export default function AppointmentNewPage() {
       barbeiroId: data.barbeiroId && data.barbeiroId !== "none" ? parseInt(data.barbeiroId) : undefined,
       servicoId: data.servicoId && data.servicoId !== "none" ? parseInt(data.servicoId) : undefined,
       data: new Date(data.data).toISOString(),
-      valor: parseFloat(data.valor),
-      desconto: data.desconto ? parseFloat(data.desconto) : 0,
-      valorFinal: parseFloat(data.valorFinal),
+      valor: parseMoney(data.valor),
+      desconto: semDesconto(data.desconto),
+      // Recalculado a partir dos dois campos em vez de lido do campo desabilitado:
+      // o total é derivado, e reparsear texto formatado é um passo a mais onde
+      // um centavo poderia se perder.
+      valorFinal: Math.max(0, parseMoney(data.valor) - semDesconto(data.desconto)),
       observacoes: data.observacoes,
       couponCode: data.couponCode || undefined
     };
@@ -218,7 +242,7 @@ export default function AppointmentNewPage() {
                         <SelectContent>
                           <SelectItem value="none">Outro / Personalizado</SelectItem>
                           {services?.map(s => (
-                            <SelectItem key={s.id} value={s.id.toString()}>{s.nome} (R$ {s.valor.toFixed(2)})</SelectItem>
+                            <SelectItem key={s.id} value={s.id.toString()}>{s.nome} ({formatBRL(s.valor)})</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -233,9 +257,13 @@ export default function AppointmentNewPage() {
                     name="valor"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Valor (R$)</FormLabel>
+                        <FormLabel>Valor</FormLabel>
                         <FormControl>
-                          <Input type="number" step="0.01" min="0" {...field} />
+                          <MoneyInput
+                            placeholder="0,00"
+                            {...field}
+                            onChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -246,9 +274,14 @@ export default function AppointmentNewPage() {
                     name="desconto"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Desconto (R$)</FormLabel>
+                        <FormLabel>Desconto</FormLabel>
                         <FormControl>
-                          <Input type="number" step="0.01" min="0" {...field} />
+                          <MoneyInput
+                            placeholder="0,00"
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -261,7 +294,12 @@ export default function AppointmentNewPage() {
                       <FormItem>
                         <FormLabel className="text-foreground font-bold">Total Final</FormLabel>
                         <FormControl>
-                          <Input type="number" disabled className="bg-muted border-none text-foreground font-bold" {...field} />
+                          <MoneyInput
+                            disabled
+                            className="bg-muted border-none text-foreground font-bold"
+                            {...field}
+                            onChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

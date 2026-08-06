@@ -21,6 +21,7 @@ import { Plus, Ticket, Trash2, CalendarX2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { formatBRL } from "@/lib/money";
 
 export default function CouponsPage() {
   const { data: coupons, isLoading } = useListCoupons();
@@ -101,7 +102,7 @@ export default function CouponsPage() {
                     </div>
                     <div className="flex items-center gap-4 text-sm">
                       <span className="font-bold">
-                        {coupon.tipo === 'percent' ? `${coupon.valor}%` : `R$ ${coupon.valor.toFixed(2)}`}
+                        {coupon.tipo === 'percent' ? `${coupon.valor}%` : formatBRL(coupon.valor)}
                       </span>
                       <span className="text-muted-foreground">
                         {coupon.usoAtual} {coupon.usoMaximo ? `/ ${coupon.usoMaximo}` : 'usos'} usados
@@ -181,7 +182,7 @@ export default function CouponsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-bold">
-                        {coupon.tipo === 'percent' ? `${coupon.valor}%` : `R$ ${coupon.valor.toFixed(2)}`}
+                        {coupon.tipo === 'percent' ? `${coupon.valor}%` : formatBRL(coupon.valor)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

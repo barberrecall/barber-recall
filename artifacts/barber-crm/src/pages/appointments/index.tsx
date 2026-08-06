@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { formatBRL } from "@/lib/money";
 
 export default function AppointmentsPage() {
   const [date, setDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
@@ -114,7 +115,7 @@ export default function AppointmentsPage() {
             <p className="text-xs font-medium text-primary">Faturamento do Dia</p>
             <div>
               <p className="text-xl md:text-2xl font-bold text-foreground">
-                {isLoading ? <Skeleton className="h-7 w-24 inline-block" /> : `R$ ${totalRevenue.toFixed(2)}`}
+                {isLoading ? <Skeleton className="h-7 w-24 inline-block" /> : formatBRL(totalRevenue)}
               </p>
               <p className="text-xs text-muted-foreground hidden md:block">
                 {appointments?.length || 0} atendimentos
@@ -152,7 +153,7 @@ export default function AppointmentsPage() {
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-foreground text-sm">R$ {appt.valorFinal.toFixed(2)}</p>
+                  <p className="font-bold text-foreground text-sm">{formatBRL(appt.valorFinal)}</p>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-7 w-7 p-0 mt-1 ml-auto block">
@@ -226,7 +227,7 @@ export default function AppointmentsPage() {
                         {appt.barbeiroNome}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-medium">R$ {appt.valorFinal.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-medium">{formatBRL(appt.valorFinal)}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

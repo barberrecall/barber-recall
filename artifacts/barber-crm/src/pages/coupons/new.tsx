@@ -16,11 +16,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Ticket, Wand2 } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { MoneyInput } from "@/components/money-input";
+import { parseMoney } from "@/lib/money";
 
 const couponSchema = z.object({
   codigo: z.string().min(3, "Código deve ter pelo menos 3 caracteres"),
   tipo: z.nativeEnum(CouponInputTipo),
-  valor: z.string().min(1, "Valor é obrigatório").transform(v => parseFloat(v)),
+  // `parseFloat` parava na vírgula: "45,50" virava cupom de R$ 45,00 e os
+  // centavos sumiam sem aviso. `parseMoney` lê os dois separadores.
+  valor: z
+    .string()
+    .min(1, "Valor é obrigatório")
+    .refine((v) => Number.isFinite(parseMoney(v)), "Valor inválido")
+    .transform(parseMoney),
   usoMaximo: z.string().optional().transform(v => v ? parseInt(v) : undefined),
   validade: z.string().optional().or(z.literal(""))
 });
@@ -134,7 +142,16 @@ export default function CouponNewPage() {
                     <FormItem>
                       <FormLabel>Valor *</FormLabel>
                       <FormControl>
-                        <Input type="number" step={form.watch("tipo") === "percent" ? "1" : "0.01"} min="0" {...field} />
+                        {/*
+                          Só o cupom de valor fixo é dinheiro. No percentual o
+                          "R$" ao lado do campo diria a coisa errada, então lá
+                          continua um número simples.
+                        */}
+                        {form.watch("tipo") === "percent" ? (
+                          <Input type="number" step="1" min="0" placeholder="10" {...field} />
+                        ) : (
+                          <MoneyInput placeholder="10,00" {...field} value={String(field.value ?? "")} onChange={field.onChange} />
+                        )}
                       </FormControl>
                       <FormMessage />
                     </FormItem>

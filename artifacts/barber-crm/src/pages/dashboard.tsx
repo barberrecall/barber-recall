@@ -5,6 +5,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianG
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatBRL } from "@/lib/money";
 
 export default function DashboardPage() {
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats({ query: { queryKey: getGetDashboardStatsQueryKey() } });
@@ -32,7 +33,7 @@ export default function DashboardPage() {
           <StatCard title="Em Risco" value={stats.clientesEmRisco} icon={AlertCircle} />
 
           <StatCard title="Atend. Hoje" value={stats.atendimentosHoje} icon={CalendarDays} />
-          <StatCard title="Faturamento" value={`R$ ${stats.faturamentoHoje.toFixed(2)}`} icon={Banknote} />
+          <StatCard title="Faturamento" value={formatBRL(stats.faturamentoHoje)} icon={Banknote} />
           <StatCard title="Cupons Usados" value={stats.cuponsUtilizados} icon={Ticket} />
           <StatCard title="Taxa Retorno" value={`${stats.taxaRetorno}%`} icon={Activity} />
         </div>
@@ -63,7 +64,7 @@ export default function DashboardPage() {
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }}
                       itemStyle={{ color: 'hsl(var(--primary))' }}
                       labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
-                      formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Receita']}
+                      formatter={(value: number) => [formatBRL(value), 'Receita']}
                     />
                     <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRevenue)" dot={false} activeDot={{ r: 5, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--card))', strokeWidth: 2 }} />
                   </AreaChart>
@@ -135,7 +136,7 @@ export default function DashboardPage() {
                   </div>
                   {activity.valor && (
                     <div className="font-semibold text-sm text-foreground flex-shrink-0">
-                      +R$ {activity.valor.toFixed(2)}
+                      +{formatBRL(activity.valor)}
                     </div>
                   )}
                 </div>

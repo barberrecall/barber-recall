@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, User, Phone, Mail, Calendar, Edit, MessageSquare, Scissors, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatBRL } from "@/lib/money";
 
 /** Parseia string "YYYY-MM-DD" como data local, evitando o offset UTC do new Date(). */
 function parseLocalDate(dateStr: string): Date {
@@ -205,9 +206,9 @@ export default function ClientDetailPage() {
                         )}
                       </div>
                       <div className="text-left sm:text-right flex-shrink-0">
-                        <div className="font-bold text-foreground text-sm">R$ {appt.valorFinal.toFixed(2)}</div>
+                        <div className="font-bold text-foreground text-sm">{formatBRL(appt.valorFinal)}</div>
                         {appt.desconto && appt.desconto > 0 ? (
-                          <div className="text-xs text-muted-foreground line-through">R$ {appt.valor.toFixed(2)}</div>
+                          <div className="text-xs text-muted-foreground line-through">{formatBRL(appt.valor)}</div>
                         ) : null}
                       </div>
                     </div>
